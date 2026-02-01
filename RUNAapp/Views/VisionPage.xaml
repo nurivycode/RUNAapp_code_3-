@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.VisionPage"
+             x:DataType="viewmodels:VisionViewModel"
+             BackgroundColor="{StaticResource RunaPrimary}"
+             Title="Vision">
+
+    <Grid RowDefinitions="Auto, *, Auto, Auto">
+        
+        <!-- Header -->
+        <Frame Grid.Row="0"
+               BackgroundColor="{StaticResource RunaPrimary}"
+               CornerRadius="0"
+               Padding="24,16"
+               HasShadow="False">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <Button Text="←"
+                        FontSize="24"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource RunaWhite}"
+                        Command="{Binding GoBackCommand}"
+                        WidthRequest="48"
+                        HeightRequest="48"/>
+                
+                <Label Grid.Column="1"
+                       Text="Obstacle Detection"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource RunaWhite}"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"/>
+            </Grid>
+        </Frame>
+
+        <!-- Camera Preview Area -->
+        <Grid Grid.Row="1" BackgroundColor="{StaticResource Gray900}">
+            
+            <!-- Camera Preview (Android CameraX PreviewView will be added programmatically) -->
+            <Border x:Name="CameraPreviewContainer"
+                    BackgroundColor="{StaticResource Gray800}"/>
+            
+            <!-- Fallback UI (shown when camera not available) -->
+            <VerticalStackLayout x:Name="CameraPlaceholder"
+                                 IsVisible="True"
+                                 VerticalOptions="Center" 
+                                 HorizontalOptions="Center"
+                                 Spacing="16">
+                <Label Text="Camera Unavailable"
+                       FontSize="18"
+                       TextColor="{StaticResource RunaWhite}"
+                       HorizontalOptions="Center"/>
+                <Label Text="{Binding DetectionStatus}"
+                       FontSize="14"
+                       TextColor="{StaticResource Gray400}"
+                       HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+            
+            <!-- Bounding Box Overlay for Detected Objects -->
+            <GraphicsView x:Name="BoundingBoxOverlay"
+                         IsVisible="{Binding IsDetecting}"
+                         BackgroundColor="Transparent"/>
+            
+            <!-- Detection Overlay -->
+            <Frame IsVisible="{Binding IsDetecting}"
+                   BackgroundColor="#80000000"
+                   CornerRadius="0"
+                   Padding="0"
+                   HasShadow="False"
+                   VerticalOptions="Start"
+                   Margin="16">
+                <Label Text="{Binding LastDetection}"
+                       TextColor="{StaticResource RunaWhite}"
+                       FontSize="16"
+                       Padding="16"
+                       HorizontalTextAlignment="Center"/>
+            </Frame>
+            
+            <!-- Detection Count Badge -->
+            <Frame IsVisible="{Binding IsDetecting}"
+                   BackgroundColor="{StaticResource RunaSecondary}"
+                   CornerRadius="20"
+                   Padding="12,8"
+                   HasShadow="False"
+                   VerticalOptions="Start"
+                   HorizontalOptions="End"
+                   Margin="16">
+                <Label Text="{Binding DetectionCount, StringFormat='{0} detected'}"
+                       TextColor="{StaticResource RunaPrimary}"
+                       FontSize="14"
+                       FontAttributes="Bold"/>
+            </Frame>
+        </Grid>
+
+        <!-- Status Panel -->
+        <Frame Grid.Row="2"
+               BackgroundColor="{StaticResource RunaSurface}"
+               CornerRadius="24,24,0,0"
+               Padding="24"
+               Margin="0,-24,0,0"
+               HasShadow="True">
+            <VerticalStackLayout Spacing="16">
+                
+                <!-- Status -->
+                <Grid ColumnDefinitions="Auto, *">
+                    <Frame BackgroundColor="{Binding IsDetecting, Converter={StaticResource BoolToStatusColorConverter}}"
+                           CornerRadius="8"
+                           Padding="8,4"
+                           HasShadow="False"
+                           VerticalOptions="Center">
+                        <Label Text="{Binding IsDetecting, Converter={StaticResource BoolToStatusTextConverter}}"
+                               TextColor="{StaticResource RunaWhite}"
+                               FontSize="12"
+                               FontAttributes="Bold"/>
+                    </Frame>
+                    
+                    <Label Grid.Column="1"
+                           Text="{Binding DetectionStatus}"
+                           Style="{StaticResource BodyMedium}"
+                           VerticalOptions="Center"
+                           Margin="12,0,0,0"/>
+                </Grid>
+                
+                <!-- Loading -->
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource RunaSecondary}"/>
+
+                <!-- Action Buttons - Stacked Vertically -->
+                <VerticalStackLayout Spacing="16">
+                    <Button Text="{Binding IsDetecting, Converter={StaticResource BoolToDetectButtonTextConverter}}"
+                            Command="{Binding ToggleDetectionCommand}"
+                            IsEnabled="{Binding IsModelLoaded}"
+                            BackgroundColor="{Binding IsDetecting, Converter={StaticResource BoolToDetectButtonColorConverter}}"
+                            TextColor="{StaticResource RunaWhite}"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            HeightRequest="64"
+                            CornerRadius="12"
+                            SemanticProperties.Description="Start or stop obstacle detection"/>
+                </VerticalStackLayout>
+                
+                <!-- Tips -->
+                <Label Text="Point your camera ahead while walking. You'll hear alerts for obstacles."
+                       Style="{StaticResource Caption}"
+                       HorizontalTextAlignment="Center"
+                       Opacity="0.7"/>
+            </VerticalStackLayout>
+        </Frame>
+
+        <!-- Bottom Safe Area -->
+        <BoxView Grid.Row="3" HeightRequest="24" Color="{StaticResource RunaSurface}"/>
+        
+    </Grid>
+
+</ContentPage>

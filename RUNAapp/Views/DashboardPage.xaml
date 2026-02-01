@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.DashboardPage"
+             x:DataType="viewmodels:DashboardViewModel"
+             BackgroundColor="{StaticResource RunaBackground}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="0">
+
+        <!-- Header -->
+        <Frame Grid.Row="0"
+               BackgroundColor="{StaticResource RunaPrimary}"
+               CornerRadius="0"
+               Padding="24,48,24,16"
+               HasShadow="False"
+               BorderColor="Transparent">
+            <Grid ColumnDefinitions="*, Auto">
+                <Label Text="RUNA"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource RunaWhite}"
+                       VerticalOptions="Center"/>
+
+                <!-- Logout Button -->
+                <Button Grid.Column="1"
+                        Text="&#x21E8;"
+                        FontSize="24"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource RunaWhite}"
+                        WidthRequest="48"
+                        HeightRequest="48"
+                        Command="{Binding SignOutCommand}"
+                        SemanticProperties.Description="Sign out button"/>
+            </Grid>
+        </Frame>
+
+        <!-- Welcome Message -->
+        <Label Grid.Row="1"
+               Text="{Binding WelcomeMessage}"
+               FontSize="20"
+               TextColor="{StaticResource RunaWhite}"
+               Padding="24,8,24,16"/>
+
+        <!-- Main Content - 3 Feature Blocks Stacked -->
+        <ScrollView Grid.Row="2" Padding="24,0">
+            <VerticalStackLayout Spacing="16">
+
+                <!-- Navigation Block -->
+                <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                       CornerRadius="16"
+                       Padding="20"
+                       HasShadow="False"
+                       BorderColor="{StaticResource RunaPrimaryLight}">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToNavigationCommand}"/>
+                    </Frame.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                        <!-- Navigation Icon -->
+                        <Frame Grid.Column="0"
+                               BackgroundColor="{StaticResource RunaSecondary}"
+                               CornerRadius="8"
+                               Padding="0"
+                               HasShadow="False"
+                               WidthRequest="48"
+                               HeightRequest="48"
+                               VerticalOptions="Center">
+                            <Label Text="&#x25B2;"
+                                   FontSize="24"
+                                   TextColor="{StaticResource RunaPrimary}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Frame>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="4"
+                                             VerticalOptions="Center">
+                            <Label Text="Navigation"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource RunaWhite}"/>
+                            <Label Text="Build and start routes to your destination"
+                                   FontSize="14"
+                                   TextColor="{StaticResource RunaWhite}"
+                                   Opacity="0.8"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Vision Detection Block -->
+                <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                       CornerRadius="16"
+                       Padding="20"
+                       HasShadow="False"
+                       BorderColor="{StaticResource RunaPrimaryLight}">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToVisionCommand}"/>
+                    </Frame.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                        <!-- Eye Icon -->
+                        <Frame Grid.Column="0"
+                               BackgroundColor="{StaticResource RunaSecondary}"
+                               CornerRadius="8"
+                               Padding="0"
+                               HasShadow="False"
+                               WidthRequest="48"
+                               HeightRequest="48"
+                               VerticalOptions="Center">
+                            <Label Text="&#x25C9;"
+                                   FontSize="24"
+                                   TextColor="{StaticResource RunaPrimary}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Frame>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="4"
+                                             VerticalOptions="Center">
+                            <Label Text="Vision Detection"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource RunaWhite}"/>
+                            <Label Text="Detect obstacles and hazards in real-time"
+                                   FontSize="14"
+                                   TextColor="{StaticResource RunaWhite}"
+                                   Opacity="0.8"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Settings Block -->
+                <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                       CornerRadius="16"
+                       Padding="20"
+                       HasShadow="False"
+                       BorderColor="{StaticResource RunaPrimaryLight}">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToSettingsCommand}"/>
+                    </Frame.GestureRecognizers>
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                        <!-- Gear Icon -->
+                        <Frame Grid.Column="0"
+                               BackgroundColor="{StaticResource RunaSecondary}"
+                               CornerRadius="8"
+                               Padding="0"
+                               HasShadow="False"
+                               WidthRequest="48"
+                               HeightRequest="48"
+                               VerticalOptions="Center">
+                            <Label Text="&#x2699;"
+                                   FontSize="24"
+                                   TextColor="{StaticResource RunaPrimary}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
+                        </Frame>
+
+                        <VerticalStackLayout Grid.Column="1"
+                                             Spacing="4"
+                                             VerticalOptions="Center">
+                            <Label Text="Settings"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource RunaWhite}"/>
+                            <Label Text="Manage your profile and preferences"
+                                   FontSize="14"
+                                   TextColor="{StaticResource RunaWhite}"
+                                   Opacity="0.8"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Voice Assistant Button with SPEAK label -->
+        <VerticalStackLayout Grid.Row="3"
+                             HorizontalOptions="Center"
+                             Spacing="8"
+                             Margin="24,16,24,24">
+
+            <!-- Circular Voice Button Container -->
+            <Grid WidthRequest="135"
+                  HeightRequest="135"
+                  HorizontalOptions="Center">
+                <!-- Background Button -->
+                <Button Command="{Binding ToggleVoiceAssistantCommand}"
+                        BackgroundColor="{Binding IsVoiceActive, Converter={StaticResource BoolToVoiceColorConverter}}"
+                        CornerRadius="67"
+                        HeightRequest="135"
+                        WidthRequest="135"
+                        Shadow="{Shadow Brush={StaticResource RunaPrimaryBrush}, Offset='0,4', Radius='8', Opacity='0.3'}"
+                        SemanticProperties.Description="Voice assistant button. Tap to speak a command."/>
+
+                <!-- Content Overlay -->
+                <VerticalStackLayout VerticalOptions="Center"
+                                     HorizontalOptions="Center"
+                                     Spacing="4"
+                                     InputTransparent="True">
+                    <!-- Microphone Icon -->
+                    <Label Text="&#x1F3A4;"
+                           FontSize="36"
+                           TextColor="{StaticResource RunaPrimary}"
+                           HorizontalOptions="Center"/>
+                    <!-- SPEAK label -->
+                    <Label Text="{Binding IsVoiceActive, Converter={StaticResource BoolToMicIconConverter}}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaPrimary}"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+
+    </Grid>
+
+</ContentPage>

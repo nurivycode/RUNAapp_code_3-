@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.SettingsPage"
+             x:DataType="viewmodels:SettingsViewModel"
+             BackgroundColor="{StaticResource RunaBackground}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <!-- Loading Overlay -->
+        <Grid IsVisible="{Binding IsBusy}"
+              BackgroundColor="{StaticResource RunaBackground}"
+              ZIndex="100">
+            <VerticalStackLayout VerticalOptions="Center"
+                                 HorizontalOptions="Center"
+                                 Spacing="16">
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   Color="{StaticResource RunaSecondary}"
+                                   HeightRequest="60"
+                                   WidthRequest="60"/>
+                <Label Text="Loading settings..."
+                       FontSize="20"
+                       TextColor="{StaticResource RunaWhite}"
+                       HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid IsVisible="{Binding IsNotBusy}"
+              RowDefinitions="Auto, *">
+
+            <!-- Header -->
+            <Frame Grid.Row="0"
+                   BackgroundColor="{StaticResource RunaPrimary}"
+                   CornerRadius="0"
+                   Padding="16,48,16,16"
+                   HasShadow="True">
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <!-- Back Button -->
+                    <Button Grid.Column="0"
+                            Text="&#x2190;"
+                            FontSize="24"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource RunaWhite}"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            Command="{Binding GoBackCommand}"
+                            SemanticProperties.Description="Go back"/>
+
+                    <!-- Title -->
+                    <Label Grid.Column="1"
+                           Text="Settings"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaWhite}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+
+                    <!-- Spacer for symmetry -->
+                    <BoxView Grid.Column="2"
+                             WidthRequest="48"
+                             Color="Transparent"/>
+                </Grid>
+            </Frame>
+
+            <!-- Scrollable Content -->
+            <ScrollView Grid.Row="1" Padding="16">
+                <VerticalStackLayout Spacing="16">
+
+                    <!-- Profile Section -->
+                    <Label Text="Profile"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaWhite}"
+                           Margin="8,8,0,0"/>
+
+                    <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                           CornerRadius="16"
+                           Padding="16"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                            <!-- Email Icon -->
+                            <Frame Grid.Column="0"
+                                   BackgroundColor="{StaticResource RunaSecondary}"
+                                   CornerRadius="8"
+                                   Padding="12"
+                                   HasShadow="False"
+                                   WidthRequest="48"
+                                   HeightRequest="48">
+                                <Label Text="&#x2709;"
+                                       FontSize="20"
+                                       TextColor="{StaticResource RunaPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Frame>
+
+                            <!-- Email Info -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 VerticalOptions="Center"
+                                                 Spacing="4">
+                                <Label Text="Email"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource RunaWhite}"/>
+                                <Label Text="{Binding UserEmail}"
+                                       FontSize="14"
+                                       TextColor="{StaticResource RunaWhite}"
+                                       Opacity="0.8"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Frame>
+
+                    <!-- Accessibility Section -->
+                    <Label Text="Accessibility"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaWhite}"
+                           Margin="8,16,0,0"/>
+
+                    <!-- Voice Feedback Toggle -->
+                    <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                           CornerRadius="16"
+                           Padding="16"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="16">
+                            <!-- Speaker Icon -->
+                            <Frame Grid.Column="0"
+                                   BackgroundColor="{StaticResource RunaSecondary}"
+                                   CornerRadius="8"
+                                   Padding="12"
+                                   HasShadow="False"
+                                   WidthRequest="48"
+                                   HeightRequest="48">
+                                <Label Text="&#x1F50A;"
+                                       FontSize="20"
+                                       TextColor="{StaticResource RunaPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Frame>
+
+                            <!-- Label -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 VerticalOptions="Center"
+                                                 Spacing="2">
+                                <Label Text="Voice Feedback"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource RunaWhite}"/>
+                                <Label Text="Enabled"
+                                       FontSize="14"
+                                       TextColor="{StaticResource RunaWhite}"
+                                       Opacity="0.7"
+                                       IsVisible="{Binding VoiceFeedbackEnabled}"/>
+                                <Label Text="Disabled"
+                                       FontSize="14"
+                                       TextColor="{StaticResource RunaWhite}"
+                                       Opacity="0.7"
+                                       IsVisible="{Binding VoiceFeedbackDisabled}"/>
+                            </VerticalStackLayout>
+
+                            <!-- Toggle -->
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding VoiceFeedbackEnabled}"
+                                    OnColor="{StaticResource RunaSecondary}"
+                                    ThumbColor="{StaticResource RunaWhite}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Frame>
+
+                    <!-- Haptic Feedback Toggle -->
+                    <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                           CornerRadius="16"
+                           Padding="16"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="16">
+                            <!-- Vibration Icon -->
+                            <Frame Grid.Column="0"
+                                   BackgroundColor="{StaticResource RunaSecondary}"
+                                   CornerRadius="8"
+                                   Padding="12"
+                                   HasShadow="False"
+                                   WidthRequest="48"
+                                   HeightRequest="48">
+                                <Label Text="&#x1F4F3;"
+                                       FontSize="20"
+                                       TextColor="{StaticResource RunaPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Frame>
+
+                            <!-- Label -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 VerticalOptions="Center"
+                                                 Spacing="2">
+                                <Label Text="Haptic Feedback"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource RunaWhite}"/>
+                                <Label Text="Enabled"
+                                       FontSize="14"
+                                       TextColor="{StaticResource RunaWhite}"
+                                       Opacity="0.7"
+                                       IsVisible="{Binding HapticFeedbackEnabled}"/>
+                                <Label Text="Disabled"
+                                       FontSize="14"
+                                       TextColor="{StaticResource RunaWhite}"
+                                       Opacity="0.7"
+                                       IsVisible="{Binding HapticFeedbackDisabled}"/>
+                            </VerticalStackLayout>
+
+                            <!-- Toggle -->
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding HapticFeedbackEnabled}"
+                                    OnColor="{StaticResource RunaSecondary}"
+                                    ThumbColor="{StaticResource RunaWhite}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Frame>
+
+                    <!-- Detection Section -->
+                    <Label Text="Detection"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaWhite}"
+                           Margin="8,16,0,0"/>
+
+                    <!-- Sensitivity Mode -->
+                    <Frame BackgroundColor="{StaticResource RunaPrimaryLight}"
+                           CornerRadius="16"
+                           Padding="16"
+                           HasShadow="False">
+                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                            <!-- Sensitivity Icon -->
+                            <Frame Grid.Column="0"
+                                   BackgroundColor="{StaticResource RunaSecondary}"
+                                   CornerRadius="8"
+                                   Padding="12"
+                                   HasShadow="False"
+                                   WidthRequest="48"
+                                   HeightRequest="48">
+                                <Label Text="&#x2699;"
+                                       FontSize="20"
+                                       TextColor="{StaticResource RunaPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Frame>
+
+                            <!-- Picker -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 VerticalOptions="Center"
+                                                 Spacing="4">
+                                <Label Text="Sensitivity Mode"
+                                       FontSize="18"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource RunaWhite}"/>
+                                <Picker Title="Select sensitivity"
+                                        SelectedItem="{Binding SensitivityMode}"
+                                        TextColor="{StaticResource RunaWhite}"
+                                        TitleColor="{StaticResource Gray400}"
+                                        BackgroundColor="Transparent">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>low</x:String>
+                                            <x:String>medium</x:String>
+                                            <x:String>high</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Frame>
+
+                    <!-- API Configuration Link -->
+                    <Button Text="API Configuration"
+                            Command="{Binding GoToSetupCommand}"
+                            Style="{StaticResource OutlineButton}"
+                            TextColor="{StaticResource RunaWhite}"
+                            BorderColor="{StaticResource RunaWhite}"
+                            Margin="0,16,0,0"/>
+
+                    <!-- Bottom padding -->
+                    <BoxView HeightRequest="40"/>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+
+        <!-- Error Toast -->
+        <Frame IsVisible="{Binding HasError}"
+               BackgroundColor="{StaticResource RunaDanger}"
+               CornerRadius="8"
+               Padding="16"
+               HasShadow="True"
+               Margin="16"
+               VerticalOptions="End"
+               HorizontalOptions="Fill">
+            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+                <Label Grid.Column="0"
+                       Text="&#x26A0;"
+                       FontSize="20"
+                       TextColor="{StaticResource RunaWhite}"
+                       VerticalOptions="Center"/>
+                <Label Grid.Column="1"
+                       Text="{Binding ErrorMessage}"
+                       FontSize="14"
+                       TextColor="{StaticResource RunaWhite}"
+                       LineBreakMode="TailTruncation"
+                       VerticalOptions="Center"/>
+                <Button Grid.Column="2"
+                        Text="&#x2715;"
+                        FontSize="16"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource RunaWhite}"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        Command="{Binding DismissErrorCommand}"
+                        VerticalOptions="Center"/>
+            </Grid>
+        </Frame>
+    </Grid>
+
+</ContentPage>

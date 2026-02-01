@@ -1,0 +1,154 @@
+RUNA App Full Conversation Summary (2026-02-01)
+
+Purpose
+This document summarizes the complete set of actions, decisions, and outcomes from the latest conversation, from initial setup through deployment, backend configuration, UI fixes, and remaining steps.
+
+Project Overview
+RUNA is a .NET MAUI mobile app with a Firebase Functions backend. The backend proxies OpenAI requests and provides secure Firestore endpoints. The app includes:
+- Authentication using Firebase Auth REST API
+- Voice assistant (transcription + intent)
+- Computer vision using YOLO ONNX
+- Navigation using OSM/Nominatim + OSRM
+- Settings stored in Firestore via backend endpoints
+
+Key Decisions and Outcomes
+1) Backend deployment (Firebase Functions)
+- Node 20 is required for Firebase Functions.
+- Node 24 caused dependency and deploy errors (missing module debug).
+- NVM for Windows was installed and configured with:
+  - NVM_HOME = C:\Users\IdeaPad\AppData\Local\nvm
+  - NVM_SYMLINK = C:\nvm4w\nodejs
+- Node 20.18.1 was installed and activated via nvm.
+- Functions dependencies were reinstalled under Node 20.
+- Firebase Functions deployed successfully.
+- Warning about cleanup policy (Artifact Registry) is optional and does not block runtime.
+
+Deployed Function Base URL
+https://us-central1-runa-e1ddb.cloudfunctions.net
+
+Deployed Endpoints
+- /transcribe
+- /chat
+- /classifyIntent
+- /getUserProfile
+- /getUserSettings
+- /saveUserSettings
+- /createUserProfile
+
+Backend Key Status
+- OPENAI_API_KEY exists in Firebase Secret Manager and is wired to the functions.
+- The app no longer requires an OpenAI key on device.
+
+Step-by-Step Execution Summary
+Step 1 and Step 2 (Deploy backend)
+- Dependencies installed with Node 20.
+- firebase deploy --only functions completed successfully.
+- Functions URLs are active.
+- Cleanup policy warning is optional.
+
+Step 3 (Backend base URL)
+- BackendBaseUrl set in Constants.cs to:
+  https://us-central1-runa-e1ddb.cloudfunctions.net
+
+Step 4 (Force backend-only OpenAI calls)
+- OpenAIService updated to always route through backend.
+- All direct OpenAI call paths removed.
+- If BackendBaseUrl is empty, the service throws a clear error.
+
+Step 5 (Remove OpenAI key requirement from Setup)
+- OpenAI API section removed from SetupPage UI.
+- SetupViewModel no longer validates, saves, or loads OpenAI key.
+- SecureStorageHelper removed OpenAI key storage methods.
+
+Step 6 (Smoke test)
+Verify these flows:
+1) Sign up / login
+2) Voice assistant
+3) Vision page
+
+Pipelines Explained (Plain Language)
+
+Login and Authentication
+1) User signs up or logs in.
+2) Firebase Auth REST API returns ID token and refresh token.
+3) App stores tokens securely.
+4) Backend Firestore endpoints require the ID token.
+
+Voice Assistant
+1) App records audio.
+2) Audio sent to /transcribe -> returns text.
+3) Text sent to /classifyIntent -> returns action and response.
+4) App performs action and speaks response.
+
+Chat
+1) User sends a message.
+2) App sends messages to /chat.
+3) Backend calls OpenAI and returns a reply.
+
+Settings and Profile
+1) App requests /getUserProfile (auto-creates if missing).
+2) App requests /getUserSettings for preferences.
+3) Changes saved through /saveUserSettings.
+4) /createUserProfile updates profile fields if needed.
+
+Navigation (OSM / OSRM)
+1) Destination text goes to Nominatim for geocoding.
+2) Coordinates sent to OSRM for route.
+3) App displays and speaks navigation steps.
+
+Computer Vision (YOLO ONNX)
+1) Camera frame captured.
+2) Frame processed by ONNX Runtime and YOLO model.
+3) Detections are filtered and spoken.
+
+UI Fixes Applied
+- Login and Register text inputs were hard to see.
+- Added white background and explicit text/placeholder colors.
+
+Files Modified in This Conversation
+- RUNAapp/Services/OpenAIService.cs
+  - Backend-only routing, removed direct OpenAI calls.
+- RUNAapp/Views/SetupPage.xaml
+  - Removed OpenAI fields.
+  - Updated titles and security note.
+- RUNAapp/ViewModels/SetupViewModel.cs
+  - Removed OpenAI key validation and storage.
+  - Firebase-only configuration flow.
+- RUNAapp/Helpers/SecureStorageHelper.cs
+  - Removed OpenAI storage helpers.
+  - Kept Firebase config and token storage.
+- RUNAapp/Views/LoginPage.xaml
+  - Improved Entry background and text visibility.
+- RUNAapp/Views/RegisterPage.xaml
+  - Improved Entry background and text visibility.
+- Documentation moved into RUNAapp/Context.md (root-level .md files relocated)
+
+Known Issues and Risks
+OSM / Nominatim
+- Public Nominatim is rate-limited and can be slow or blocked.
+- Requires proper User-Agent header.
+- For production, host your own or use paid geocoding.
+
+OSRM
+- Public OSRM demo server is rate-limited and unreliable under load.
+- For production, host your own or use a paid routing API.
+
+Computer Vision
+- ONNX model inference can be slow on low-end devices.
+- Frame size, orientation, and preprocessing must be correct.
+- Throttling is recommended to avoid UI lag.
+
+What Still Needs To Be Done
+1) Smoke test after deploy:
+   - Login/signup
+   - Voice assistant
+   - Vision page
+2) Confirm Firebase config is valid and Auth is enabled.
+3) Optional: configure Artifact Registry cleanup policy for functions images.
+4) Review navigation reliability with OSM/OSRM under real usage.
+
+Optional Cleanup Policy (Non-blocking)
+- Warning is about container image cleanup only.
+- Does not affect runtime.
+- Can be fixed later using:
+  firebase functions:artifacts:setpolicy

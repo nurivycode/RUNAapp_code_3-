@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.RegisterPage"
+             x:DataType="viewmodels:RegisterViewModel"
+             BackgroundColor="{StaticResource RunaBackground}"
+             Title="Create Account">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto, *, Auto" Padding="24" RowSpacing="24">
+            
+            <!-- Header -->
+            <VerticalStackLayout Grid.Row="0" Spacing="8" Margin="0,40,0,0">
+                <Label Text="RUNA"
+                       FontSize="48"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource RunaSecondary}"
+                       HorizontalOptions="Center"/>
+                
+                <Label Text="Create your account"
+                       Style="{StaticResource TitleMedium}"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource RunaTextSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Form -->
+            <VerticalStackLayout Grid.Row="1" 
+                                 VerticalOptions="Center"
+                                 Spacing="16">
+                
+                <!-- Error Message -->
+                <Frame IsVisible="{Binding HasError}"
+                       BackgroundColor="{StaticResource RunaDanger}"
+                       CornerRadius="8"
+                       Padding="16"
+                       HasShadow="False">
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="{StaticResource RunaWhite}"
+                           FontSize="14"/>
+                </Frame>
+
+                <!-- Email Field -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Email Address"
+                           Style="{StaticResource BodyMedium}"
+                           FontAttributes="Bold"/>
+                    
+                    <Frame Style="{StaticResource CardFrame}" Padding="0" HasShadow="False">
+                        <Entry Text="{Binding Email}"
+                               Placeholder="Enter your email"
+                               Keyboard="Email"
+                               ReturnType="Next"
+                               FontSize="18"
+                               HeightRequest="56"
+                               BackgroundColor="{StaticResource RunaWhite}"
+                               TextColor="{StaticResource RunaTextPrimary}"
+                               PlaceholderColor="{StaticResource RunaTextSecondary}"
+                               Margin="16,0"
+                               SemanticProperties.Description="Email address input field"/>
+                    </Frame>
+                </VerticalStackLayout>
+
+                <!-- Password Field -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Password"
+                           Style="{StaticResource BodyMedium}"
+                           FontAttributes="Bold"/>
+                    
+                    <Frame Style="{StaticResource CardFrame}" Padding="0" HasShadow="False">
+                        <Entry Text="{Binding Password}"
+                               Placeholder="Create a password (min 6 characters)"
+                               IsPassword="True"
+                               ReturnType="Next"
+                               FontSize="18"
+                               HeightRequest="56"
+                               BackgroundColor="{StaticResource RunaWhite}"
+                               TextColor="{StaticResource RunaTextPrimary}"
+                               PlaceholderColor="{StaticResource RunaTextSecondary}"
+                               Margin="16,0"
+                               SemanticProperties.Description="Password input field"/>
+                    </Frame>
+                </VerticalStackLayout>
+
+                <!-- Confirm Password Field -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Confirm Password"
+                           Style="{StaticResource BodyMedium}"
+                           FontAttributes="Bold"/>
+                    
+                    <Frame Style="{StaticResource CardFrame}" Padding="0" HasShadow="False">
+                        <Entry Text="{Binding ConfirmPassword}"
+                               Placeholder="Re-enter your password"
+                               IsPassword="True"
+                               ReturnType="Done"
+                               FontSize="18"
+                               HeightRequest="56"
+                               BackgroundColor="{StaticResource RunaWhite}"
+                               TextColor="{StaticResource RunaTextPrimary}"
+                               PlaceholderColor="{StaticResource RunaTextSecondary}"
+                               Margin="16,0"
+                               SemanticProperties.Description="Confirm password input field"/>
+                    </Frame>
+                </VerticalStackLayout>
+
+                <!-- Sign Up Button -->
+                <Button Text="Create Account"
+                        Command="{Binding SignUpCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Margin="0,16,0,0"
+                        SemanticProperties.Hint="Tap to create your account"/>
+
+                <!-- Loading Indicator -->
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource RunaSecondary}"
+                                   HeightRequest="40"/>
+            </VerticalStackLayout>
+
+            <!-- Login Link -->
+            <VerticalStackLayout Grid.Row="2" 
+                                 HorizontalOptions="Center"
+                                 Spacing="8">
+                <Label Text="Already have an account?"
+                       Style="{StaticResource BodyMedium}"
+                       HorizontalOptions="Center"/>
+                
+                <Label Text="Sign In"
+                       TextColor="{StaticResource RunaPrimary}"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextDecorations="Underline"
+                       SemanticProperties.Hint="Tap to sign in to existing account">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToLoginCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+            </VerticalStackLayout>
+            
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

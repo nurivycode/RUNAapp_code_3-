@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="RUNAapp.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:RUNAapp.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False"
+    Shell.BackgroundColor="{StaticResource RunaPrimary}"
+    Shell.ForegroundColor="{StaticResource RunaWhite}">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RUNA Application Navigation Structure
+
+         Routes:
+         - //Welcome - Landing page for unauthenticated users
+         - //Login - Sign in page
+         - //Register - Sign up page
+         - //Dashboard - Main app dashboard (authenticated)
+         - //Navigation - Navigation/Maps page
+         - //Vision - Computer vision/obstacle detection page
+         - //Settings - User settings page
+         - //Setup - API configuration page
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Authentication Routes (No Tab Bar) -->
+    <ShellContent
+        Route="Welcome"
+        ContentTemplate="{DataTemplate views:WelcomePage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Login"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Shell.NavBarIsVisible="True"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Register"
+        ContentTemplate="{DataTemplate views:RegisterPage}"
+        Shell.NavBarIsVisible="True"
+        Shell.TabBarIsVisible="False" />
+
+    <!-- Main App Routes -->
+    <ShellContent
+        Route="Dashboard"
+        ContentTemplate="{DataTemplate views:DashboardPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Navigation"
+        ContentTemplate="{DataTemplate views:NavigationPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Vision"
+        ContentTemplate="{DataTemplate views:VisionPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Settings"
+        ContentTemplate="{DataTemplate views:SettingsPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="Setup"
+        ContentTemplate="{DataTemplate views:SetupPage}"
+        Shell.NavBarIsVisible="True"
+        Shell.TabBarIsVisible="False" />
+
+</Shell>

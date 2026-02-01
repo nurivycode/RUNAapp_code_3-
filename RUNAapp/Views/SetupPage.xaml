@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.SetupPage"
+             x:DataType="viewmodels:SetupViewModel"
+             BackgroundColor="{StaticResource RunaBackground}"
+             Title="Setup">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            
+            <!-- Header -->
+            <VerticalStackLayout Spacing="8" Margin="0,24,0,16">
+                <Label Text="Firebase Configuration"
+                       Style="{StaticResource TitleLarge}"
+                       HorizontalOptions="Center"/>
+                
+                <Label Text="Enter your Firebase settings to enable sign in"
+                       Style="{StaticResource BodyMedium}"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource RunaTextSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Status -->
+            <Frame IsVisible="{Binding IsConfigured}"
+                   BackgroundColor="{StaticResource RunaAccent}"
+                   CornerRadius="8"
+                   Padding="16"
+                   HasShadow="False">
+                <Label Text="{Binding StatusMessage}"
+                       TextColor="{StaticResource RunaWhite}"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"/>
+            </Frame>
+
+            <!-- Error -->
+            <Frame IsVisible="{Binding HasError}"
+                   BackgroundColor="{StaticResource RunaDanger}"
+                   CornerRadius="8"
+                   Padding="16"
+                   HasShadow="False">
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="{StaticResource RunaWhite}"
+                       FontSize="14"/>
+            </Frame>
+
+            <!-- Firebase Section -->
+            <Frame Style="{StaticResource CardFrame}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Firebase Configuration"
+                           Style="{StaticResource TitleSmall}"
+                           TextColor="{StaticResource RunaPrimary}"/>
+                    
+                    <Label Text="Required for authentication"
+                           Style="{StaticResource Caption}"/>
+                    
+                    <Entry Text="{Binding FirebaseApiKey}"
+                           Placeholder="API Key"
+                           IsPassword="True"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseAuthDomain}"
+                           Placeholder="Auth Domain (e.g., project.firebaseapp.com)"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseProjectId}"
+                           Placeholder="Project ID"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseStorageBucket}"
+                           Placeholder="Storage Bucket (optional)"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseMessagingSenderId}"
+                           Placeholder="Messaging Sender ID (optional)"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseAppId}"
+                           Placeholder="App ID"
+                           FontSize="16"/>
+                    
+                    <Entry Text="{Binding FirebaseMeasurementId}"
+                           Placeholder="Measurement ID (optional)"
+                           FontSize="16"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Actions -->
+            <Button Text="Save Configuration"
+                    Command="{Binding SaveConfigurationCommand}"
+                    Style="{StaticResource PrimaryButton}"/>
+            
+            <Button Text="Clear All Keys"
+                    Command="{Binding ClearConfigurationCommand}"
+                    Style="{StaticResource DangerButton}"
+                    IsVisible="{Binding IsConfigured}"/>
+            
+            <Button Text="Skip for Now"
+                    Command="{Binding SkipSetupCommand}"
+                    Style="{StaticResource OutlineButton}"/>
+
+            <!-- Info -->
+            <Frame BackgroundColor="{StaticResource Gray100}"
+                   CornerRadius="8"
+                   Padding="16"
+                   HasShadow="False">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Security Note"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource RunaTextPrimary}"/>
+                    <Label Text="Your Firebase settings are stored securely on your device using encrypted storage."
+                           Style="{StaticResource Caption}"
+                           LineHeight="1.4"/>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Bottom padding -->
+            <BoxView HeightRequest="40"/>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

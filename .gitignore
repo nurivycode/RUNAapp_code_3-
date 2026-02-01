@@ -1,0 +1,67 @@
+# ═══════════════════════════════════════════════════════════════════════
+# RUNA App .gitignore
+# ═══════════════════════════════════════════════════════════════════════
+
+# Build outputs
+bin/
+obj/
+*.apk
+*.aab
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.csproj.user
+
+# NuGet
+packages/
+*.nupkg
+
+# ═══════════════════════════════════════════════════════════════════════
+# SECURITY - Never commit these files!
+# ═══════════════════════════════════════════════════════════════════════
+
+# API Keys and secrets
+appsettings.json
+appsettings.*.json
+!appsettings.template.json
+secrets.json
+*.secrets
+.env
+.env.*
+
+# Android signing keys
+*.keystore
+*.jks
+keystore.properties
+
+# ═══════════════════════════════════════════════════════════════════════
+# Large files
+# ═══════════════════════════════════════════════════════════════════════
+
+# ONNX models (too large for git)
+*.onnx
+
+# ═══════════════════════════════════════════════════════════════════════
+# OS files
+# ═══════════════════════════════════════════════════════════════════════
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ═══════════════════════════════════════════════════════════════════════
+# Logs and temp files
+# ═══════════════════════════════════════════════════════════════════════
+
+*.log
+*.tmp
+*.temp
+crash_reports/

@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RUNA Application Styles
+         Accessibility-First Design for Visually Impaired Users
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Base Page Style -->
+    <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaBackground}"/>
+    </Style>
+
+    <!-- Navigation Page -->
+    <Style TargetType="NavigationPage">
+        <Setter Property="BarBackgroundColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="BarTextColor" Value="{StaticResource RunaWhite}"/>
+    </Style>
+
+    <!-- Shell Styling -->
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="Shell.ForegroundColor" Value="{StaticResource RunaWhite}"/>
+        <Setter Property="Shell.TitleColor" Value="{StaticResource RunaWhite}"/>
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="Shell.TabBarForegroundColor" Value="{StaticResource RunaWhite}"/>
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource Gray400}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Typography - Large sizes for accessibility
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="TitleLarge" TargetType="Label">
+        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+        <Setter Property="HorizontalOptions" Value="Center"/>
+    </Style>
+
+    <Style x:Key="TitleMedium" TargetType="Label">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+    </Style>
+
+    <Style x:Key="TitleSmall" TargetType="Label">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+    </Style>
+
+    <Style x:Key="BodyLarge" TargetType="Label">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+        <Setter Property="LineHeight" Value="1.5"/>
+    </Style>
+
+    <Style x:Key="BodyMedium" TargetType="Label">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextSecondary}"/>
+        <Setter Property="LineHeight" Value="1.4"/>
+    </Style>
+
+    <Style x:Key="Caption" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Buttons - Large touch targets for accessibility (minimum 48dp)
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaWhite}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="HeightRequest" Value="56"/>
+        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSecondary}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="HeightRequest" Value="56"/>
+        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+
+    <Style x:Key="OutlineButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="BorderColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="BorderWidth" Value="2"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="HeightRequest" Value="56"/>
+        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+
+    <Style x:Key="DangerButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaDanger}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaWhite}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="HeightRequest" Value="56"/>
+        <Setter Property="Padding" Value="24,12"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+
+    <!-- Voice Assistant FAB Button -->
+    <Style x:Key="VoiceFAB" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSecondary}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaPrimary}"/>
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="CornerRadius" Value="35"/>
+        <Setter Property="HeightRequest" Value="70"/>
+        <Setter Property="WidthRequest" Value="70"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Entry & Editor - Clear input fields
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSurface}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource Gray400}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="HeightRequest" Value="56"/>
+    </Style>
+
+    <Style x:Key="RoundedEntry" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSurface}"/>
+        <Setter Property="TextColor" Value="{StaticResource RunaTextPrimary}"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource Gray400}"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="HeightRequest" Value="56"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Cards & Frames
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="CardFrame" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSurface}"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="HasShadow" Value="True"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+    </Style>
+
+    <Style x:Key="AlertCard" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaSecondary}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="HasShadow" Value="False"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+    </Style>
+
+    <Style x:Key="DangerCard" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource RunaDanger}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="HasShadow" Value="False"/>
+        <Setter Property="BorderColor" Value="Transparent"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Activity Indicators
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource RunaSecondary}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Progress Bar
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="ProgressColor" Value="{StaticResource RunaSecondary}"/>
+    </Style>
+
+</ResourceDictionary>
