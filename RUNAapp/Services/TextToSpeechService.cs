@@ -11,6 +11,8 @@ public class TextToSpeechService : ITextToSpeechService
     private CancellationTokenSource? _speakCts;
     private float _speechRate = Constants.TtsSpeechRate;
     private float _pitch = Constants.TtsPitch;
+    private Locale? _preferredEnglishLocale;
+    private bool _localeResolved;
     
     public bool IsSpeaking { get; private set; }
     
@@ -34,9 +36,9 @@ public class TextToSpeechService : ITextToSpeechService
                 Pitch = _pitch,
                 Volume = Constants.TtsVolume
             };
-            
-            // Locale is set via app culture (App.xaml.cs) - forces English US
-            
+
+            options.Locale = await GetPreferredEnglishLocaleAsync();
+
             // Note: SpeechRate is not directly available in SpeechOptions
             // It uses the device default. We'd need platform-specific code for custom rate.
             
@@ -84,9 +86,9 @@ public class TextToSpeechService : ITextToSpeechService
                 Pitch = 1.2f, // Slightly higher pitch for urgency
                 Volume = 1.0f // Maximum volume for alerts
             };
-            
-            // Locale is set via app culture (App.xaml.cs) - forces English US
-            
+
+            options.Locale = await GetPreferredEnglishLocaleAsync();
+
             await TextToSpeech.Default.SpeakAsync(text, options, _speakCts.Token);
         }
         catch (OperationCanceledException)
@@ -124,5 +126,30 @@ public class TextToSpeechService : ITextToSpeechService
     public void SetPitch(float pitch)
     {
         _pitch = Math.Clamp(pitch, 0.1f, 2.0f);
+    }
+
+    private async Task<Locale?> GetPreferredEnglishLocaleAsync()
+    {
+        if (_localeResolved)
+            return _preferredEnglishLocale;
+
+        try
+        {
+            var locales = await TextToSpeech.Default.GetLocalesAsync();
+            _preferredEnglishLocale =
+                locales.FirstOrDefault(locale => string.Equals(locale.Language, "en-US", StringComparison.OrdinalIgnoreCase)) ??
+                locales.FirstOrDefault(locale => locale.Language.StartsWith("en-", StringComparison.OrdinalIgnoreCase)) ??
+                locales.FirstOrDefault(locale => string.Equals(locale.Language, "en", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TTS locale resolve error: {ex.Message}");
+        }
+        finally
+        {
+            _localeResolved = true;
+        }
+
+        return _preferredEnglishLocale;
     }
 }

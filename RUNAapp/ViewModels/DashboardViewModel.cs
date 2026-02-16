@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using RUNAapp.Helpers;
 using RUNAapp.Models;
 using RUNAapp.Services;
 
@@ -15,6 +16,7 @@ public partial class DashboardViewModel : BaseViewModel
     private readonly ITextToSpeechService _ttsService;
     private readonly INavigationService _navigationService;
     private readonly IComputerVisionService _visionService;
+    private readonly IOpenAIService _openAIService;
     
     [ObservableProperty]
     private string _userEmail = string.Empty;
@@ -37,18 +39,26 @@ public partial class DashboardViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isDetectionActive;
     
+    [ObservableProperty]
+    private bool _isDeveloperMode = Constants.EnableDeveloperMode;
+    
+    [ObservableProperty]
+    private string _developerCommandText = string.Empty;
+    
     public DashboardViewModel(
         IAuthService authService,
         IVoiceAssistantService voiceService,
         ITextToSpeechService ttsService,
         INavigationService navigationService,
-        IComputerVisionService visionService)
+        IComputerVisionService visionService,
+        IOpenAIService openAIService)
     {
         _authService = authService;
         _voiceService = voiceService;
         _ttsService = ttsService;
         _navigationService = navigationService;
         _visionService = visionService;
+        _openAIService = openAIService;
         
         Title = "RUNA";
         
@@ -79,6 +89,9 @@ public partial class DashboardViewModel : BaseViewModel
         
         // Load CV model in background
         _ = _visionService.LoadModelAsync();
+
+        // Warm up voice backend (fire-and-forget) to reduce cold-start delays
+        _ = _openAIService.WarmupAsync();
     }
     
     [RelayCommand]
@@ -141,6 +154,20 @@ public partial class DashboardViewModel : BaseViewModel
         await _ttsService.SpeakAsync(helpText);
     }
     
+    [RelayCommand]
+    private async Task SubmitDeveloperCommandAsync()
+    {
+        var text = DeveloperCommandText?.Trim();
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            await _ttsService.SpeakAsync("Enter a command first.");
+            return;
+        }
+        
+        DeveloperCommandText = string.Empty;
+        await _voiceService.ProcessTextCommandAsync(text);
+    }
+    
     private async Task UpdateLocationAsync()
     {
         try
@@ -187,28 +214,60 @@ public partial class DashboardViewModel : BaseViewModel
     
     private async void OnIntentClassified(object? sender, IntentResult result)
     {
-        // Handle the classified intent
+        await MainThread.InvokeOnMainThreadAsync(() => ExecuteIntentAsync(result));
+    }
+    
+    private async Task ExecuteIntentAsync(IntentResult result)
+    {
         switch (result.Action)
         {
             case IntentAction.NavigateTo:
             case IntentAction.GetDirections:
-                if (result.Parameters.TryGetValue("destination", out var destination))
+                if (result.Parameters.TryGetValue("destination", out var destination) &&
+                    !string.IsNullOrWhiteSpace(destination))
                 {
-                    // Navigate to the destination
                     await Shell.Current.GoToAsync($"//Navigation?destination={Uri.EscapeDataString(destination)}");
                 }
+                else
+                {
+                    await _ttsService.SpeakAsync("Please say your destination.");
+                }
                 break;
-                
+            
+            case IntentAction.StartNavigation:
+                await Shell.Current.GoToAsync("//Navigation?action=start");
+                break;
+            
+            case IntentAction.StopNavigation:
+                if (_navigationService.IsNavigating)
+                {
+                    _navigationService.StopNavigation();
+                    await _ttsService.SpeakAsync("Navigation stopped.");
+                }
+                else
+                {
+                    await Shell.Current.GoToAsync("//Navigation?action=stop");
+                }
+                break;
+            
             case IntentAction.StartDetection:
             case IntentAction.DescribeSurroundings:
                 await Shell.Current.GoToAsync("//Vision");
                 break;
-                
+            
             case IntentAction.WhereAmI:
                 await _ttsService.SpeakAsync($"You are currently at {CurrentLocation}");
                 break;
-                
+            
+            case IntentAction.RepeatLastMessage:
+                if (!string.IsNullOrWhiteSpace(_voiceService.LastResponse))
+                {
+                    await _ttsService.SpeakAsync(_voiceService.LastResponse);
+                }
+                break;
+            
             case IntentAction.GetHelp:
+            case IntentAction.Unknown:
                 await GetHelpAsync();
                 break;
         }

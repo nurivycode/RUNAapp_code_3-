@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
+             x:Class="RUNAapp.Views.AccessCodePage"
+             x:DataType="viewmodels:AccessCodeViewModel"
+             BackgroundColor="{StaticResource RunaPrimary}"
+             Shell.NavBarIsVisible="True"
+             Title="Access Code">
+
+    <Grid Padding="32" RowDefinitions="Auto, Auto, *">
+        <VerticalStackLayout Grid.Row="0" Spacing="12">
+            <Label Text="Enter Access Code"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource RunaWhite}"
+                   HorizontalOptions="Center"/>
+
+            <Label Text="Type the code you received from RUNA."
+                   FontSize="16"
+                   TextColor="{StaticResource RunaWhite}"
+                   Opacity="0.8"
+                   HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="16" Margin="0,24,0,0">
+            <Entry Text="{Binding AccessCode}"
+                   Placeholder="Access Code"
+                   FontSize="20"
+                   TextColor="{StaticResource RunaWhite}"
+                   PlaceholderColor="{StaticResource RunaTextSecondary}"
+                   BackgroundColor="{StaticResource RunaPrimaryLight}"/>
+
+            <Button Text="VERIFY ACCESS CODE"
+                    Command="{Binding SubmitAccessCodeCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource RunaSecondary}"
+                    BorderColor="{StaticResource RunaSecondary}"
+                    BorderWidth="2"
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    HeightRequest="60"
+                    CornerRadius="8"/>
+        </VerticalStackLayout>
+
+        <Frame Grid.Row="2"
+               IsVisible="{Binding HasError}"
+               BackgroundColor="{StaticResource RunaDanger}"
+               CornerRadius="8"
+               Padding="16"
+               HasShadow="False"
+               Margin="0,24,0,0">
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{StaticResource RunaWhite}"
+                   FontSize="14"/>
+        </Frame>
+    </Grid>
+</ContentPage>

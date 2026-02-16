@@ -66,9 +66,10 @@
                                WidthRequest="48"
                                HeightRequest="48"
                                VerticalOptions="Center">
-                            <Label Text="&#x25B2;"
-                                   FontSize="24"
-                                   TextColor="{StaticResource RunaPrimary}"
+                            <Image Source="navigation_icon_2.png"
+                                   WidthRequest="28"
+                                   HeightRequest="28"
+                                   Aspect="AspectFit"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Frame>
@@ -107,9 +108,10 @@
                                WidthRequest="48"
                                HeightRequest="48"
                                VerticalOptions="Center">
-                            <Label Text="&#x25C9;"
-                                   FontSize="24"
-                                   TextColor="{StaticResource RunaPrimary}"
+                            <Image Source="camera_icon_2.png"
+                                   WidthRequest="28"
+                                   HeightRequest="28"
+                                   Aspect="AspectFit"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Frame>
@@ -148,9 +150,10 @@
                                WidthRequest="48"
                                HeightRequest="48"
                                VerticalOptions="Center">
-                            <Label Text="&#x2699;"
-                                   FontSize="24"
-                                   TextColor="{StaticResource RunaPrimary}"
+                            <Image Source="settings_icon_2.png"
+                                   WidthRequest="28"
+                                   HeightRequest="28"
+                                   Aspect="AspectFit"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"/>
                         </Frame>
@@ -168,6 +171,34 @@
                                    Opacity="0.8"/>
                         </VerticalStackLayout>
                     </Grid>
+                </Frame>
+                
+                <!-- Developer Command Input (hidden in production) -->
+                <Frame IsVisible="{Binding IsDeveloperMode}"
+                       BackgroundColor="{StaticResource RunaPrimaryLight}"
+                       CornerRadius="16"
+                       Padding="16"
+                       HasShadow="False"
+                       BorderColor="{StaticResource RunaPrimaryLight}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Developer Command"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource RunaWhite}"/>
+                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding DeveloperCommandText}"
+                                   Placeholder="e.g. веди к байтереку"
+                                   ReturnType="Send"
+                                   ReturnCommand="{Binding SubmitDeveloperCommandCommand}"
+                                   BackgroundColor="{StaticResource RunaWhite}"
+                                   TextColor="{StaticResource RunaTextPrimary}"/>
+                            <Button Grid.Column="1"
+                                    Text="Run"
+                                    Command="{Binding SubmitDeveloperCommandCommand}"
+                                    Style="{StaticResource SecondaryButton}"/>
+                        </Grid>
+                    </VerticalStackLayout>
                 </Frame>
             </VerticalStackLayout>
         </ScrollView>
@@ -197,9 +228,10 @@
                                      Spacing="4"
                                      InputTransparent="True">
                     <!-- Microphone Icon -->
-                    <Label Text="&#x1F3A4;"
-                           FontSize="36"
-                           TextColor="{StaticResource RunaPrimary}"
+                    <Image Source="mic_icon_2.png"
+                           WidthRequest="40"
+                           HeightRequest="40"
+                           Aspect="AspectFit"
                            HorizontalOptions="Center"/>
                     <!-- SPEAK label -->
                     <Label Text="{Binding IsVoiceActive, Converter={StaticResource BoolToMicIconConverter}}"

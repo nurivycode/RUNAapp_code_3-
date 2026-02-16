@@ -80,15 +80,23 @@ public partial class VisionPage : ContentPage
 
             _previewView = new PreviewView(activity)
             {
-                LayoutParameters = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MatchParent,
-                    FrameLayout.LayoutParams.MatchParent)
+                LayoutParameters = new Android.Views.ViewGroup.LayoutParams(
+                    Android.Views.ViewGroup.LayoutParams.MatchParent,
+                    Android.Views.ViewGroup.LayoutParams.MatchParent)
             };
 
             // Set the preview view on the camera handler
             if (_cameraProvider is RUNAapp.Platforms.Android.CameraFrameHandler handler)
             {
                 handler.SetPreviewView(_previewView);
+            }
+
+            // Wait for the MAUI Handler to be created (Handlers are lazy — not available during OnAppearing)
+            var handlerRetries = 0;
+            while (CameraPreviewContainer.Handler == null && handlerRetries < 50)
+            {
+                await Task.Delay(50); // 50ms * 50 = 2.5s max wait
+                handlerRetries++;
             }
 
             // Add PreviewView to the container
@@ -98,7 +106,25 @@ public partial class VisionPage : ContentPage
                 {
                     viewGroup.RemoveAllViews();
                     viewGroup.AddView(_previewView);
+
+                    // Force Android to re-measure after adding native view
+                    // (MAUI layout pass already completed before AddView)
+                    viewGroup.RequestLayout();
+                    viewGroup.Post(() => viewGroup.RequestLayout());
+
+                    CameraPlaceholder.IsVisible = false;
+                    System.Diagnostics.Debug.WriteLine("Camera preview attached to ViewGroup");
                 }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Container is {containerView.GetType().Name}, not ViewGroup");
+                    CameraPlaceholder.IsVisible = true;
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("CameraPreviewContainer Handler or PlatformView is null");
+                CameraPlaceholder.IsVisible = true;
             }
 
             // Subscribe to frame events
@@ -106,11 +132,10 @@ public partial class VisionPage : ContentPage
 
             // Start the camera
             await _cameraProvider.StartAsync();
-            CameraPlaceholder.IsVisible = false;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Camera setup error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Camera setup error: {ex.Message}\n{ex.StackTrace}");
             CameraPlaceholder.IsVisible = true;
         }
 #else
@@ -124,22 +149,35 @@ public partial class VisionPage : ContentPage
     {
         base.OnDisappearing();
 
-        // Unsubscribe from frame events
+        // Unsubscribe from frame events immediately
         if (_cameraProvider != null)
         {
             _cameraProvider.FrameAvailable -= OnFrameAvailable;
-            await _cameraProvider.StopAsync();
+        }
+
+        // Stop detection synchronously (fast — just flips flags and disposes timer)
+        if (BindingContext is VisionViewModel vm && vm.IsDetecting)
+        {
+            vm.StopDetectionCommand.Execute(null);
+        }
+
+        // Stop camera on background thread so page transition isn't blocked
+        if (_cameraProvider != null)
+        {
+            var provider = _cameraProvider;
+            _ = Task.Run(async () =>
+            {
+                try { await provider.StopAsync(); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Camera stop error: {ex.Message}");
+                }
+            });
         }
 
 #if ANDROID
         _previewView = null;
 #endif
-
-        // Stop detection when leaving page
-        if (BindingContext is VisionViewModel vm && vm.IsDetecting)
-        {
-            vm.StopDetectionCommand.Execute(null);
-        }
     }
 
     private void OnFrameAvailable(object? sender, FrameAvailableEventArgs e)

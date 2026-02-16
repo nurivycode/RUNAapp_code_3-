@@ -4,6 +4,7 @@ using Plugin.Maui.Audio;
 using RUNAapp.Services;
 using RUNAapp.ViewModels;
 using RUNAapp.Views;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 #if ANDROID
 using RUNAapp.Platforms.Android;
 #endif
@@ -20,6 +21,7 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .UseMauiCommunityToolkitMediaElement()
+            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -29,7 +31,12 @@ public static class MauiProgram
         // ═══════════════════════════════════════════════════════════════════════
         // HTTP Client
         // ═══════════════════════════════════════════════════════════════════════
-        builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton(sp =>
+        {
+            var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(30);
+            return client;
+        });
 
         // ═══════════════════════════════════════════════════════════════════════
         // Audio Manager (for voice recording)
@@ -44,6 +51,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITextToSpeechService, TextToSpeechService>();
         builder.Services.AddSingleton<IComputerVisionService, ComputerVisionService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IDeterministicIntentService, DeterministicIntentService>();
         builder.Services.AddSingleton<IVoiceAssistantService, VoiceAssistantService>();
         builder.Services.AddSingleton<IFirestoreService, FirestoreService>();
         
@@ -58,24 +66,20 @@ public static class MauiProgram
         // ViewModels - Transient (new instance per request)
         // ═══════════════════════════════════════════════════════════════════════
         builder.Services.AddTransient<WelcomeViewModel>();
-        builder.Services.AddTransient<LoginViewModel>();
-        builder.Services.AddTransient<RegisterViewModel>();
+        builder.Services.AddTransient<AccessCodeViewModel>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<NavigationViewModel>();
         builder.Services.AddTransient<VisionViewModel>();
-        builder.Services.AddTransient<SetupViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
 
         // ═══════════════════════════════════════════════════════════════════════
         // Pages - Transient (new instance per navigation)
         // ═══════════════════════════════════════════════════════════════════════
         builder.Services.AddTransient<WelcomePage>();
-        builder.Services.AddTransient<LoginPage>();
-        builder.Services.AddTransient<RegisterPage>();
+        builder.Services.AddTransient<AccessCodePage>();
         builder.Services.AddTransient<DashboardPage>();
         builder.Services.AddTransient<Views.NavigationPage>();
         builder.Services.AddTransient<VisionPage>();
-        builder.Services.AddTransient<SetupPage>();
         builder.Services.AddTransient<SettingsPage>();
 
 #if DEBUG

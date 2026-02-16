@@ -271,14 +271,6 @@
                         </Grid>
                     </Frame>
 
-                    <!-- API Configuration Link -->
-                    <Button Text="API Configuration"
-                            Command="{Binding GoToSetupCommand}"
-                            Style="{StaticResource OutlineButton}"
-                            TextColor="{StaticResource RunaWhite}"
-                            BorderColor="{StaticResource RunaWhite}"
-                            Margin="0,16,0,0"/>
-
                     <!-- Bottom padding -->
                     <BoxView HeightRequest="40"/>
 

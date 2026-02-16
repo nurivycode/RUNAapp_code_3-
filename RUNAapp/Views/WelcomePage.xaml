@@ -38,20 +38,9 @@
                              VerticalOptions="Center"
                              Spacing="16">
 
-            <!-- Sign Up Button (Primary) -->
-            <Button Text="SIGN UP"
-                    Command="{Binding GoToRegisterCommand}"
-                    BackgroundColor="{StaticResource RunaSecondary}"
-                    TextColor="{StaticResource RunaPrimary}"
-                    FontSize="18"
-                    FontAttributes="Bold"
-                    HeightRequest="60"
-                    CornerRadius="8"
-                    SemanticProperties.Hint="Tap to create a new account"/>
-
-            <!-- Log In Button (Outline) -->
-            <Button Text="LOG IN"
-                    Command="{Binding GoToLoginCommand}"
+            <!-- Access Code Button (Outline) -->
+            <Button Text="ENTER ACCESS CODE"
+                    Command="{Binding GoToAccessCodeCommand}"
                     BackgroundColor="Transparent"
                     TextColor="{StaticResource RunaSecondary}"
                     BorderColor="{StaticResource RunaSecondary}"
@@ -60,7 +49,7 @@
                     FontAttributes="Bold"
                     HeightRequest="60"
                     CornerRadius="8"
-                    SemanticProperties.Hint="Tap to sign in to your account"/>
+                    SemanticProperties.Hint="Tap to enter your access code"/>
         </VerticalStackLayout>
 
         <!-- Help Hint -->

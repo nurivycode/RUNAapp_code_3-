@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
+using System.Globalization;
 using RUNAapp.Helpers;
 using RUNAapp.Models;
 
@@ -14,6 +16,8 @@ public class NavigationService : INavigationService
     private readonly JsonSerializerOptions _jsonOptions;
     private CancellationTokenSource? _navigationCts;
     private Timer? _locationTimer;
+    private int _isUpdatingNavigation;
+    private DateTime _lastRerouteAt = DateTime.MinValue;
     
     public NavigationRoute? CurrentRoute { get; private set; }
     public bool IsNavigating { get; private set; }
@@ -64,36 +68,58 @@ public class NavigationService : INavigationService
         }
     }
     
-    public async Task<List<GeocodingResult>> SearchLocationAsync(string query)
+    public async Task<List<GeocodingResult>> SearchLocationAsync(string query, GeoCoordinate? userLocation = null)
     {
         var url = $"{Constants.NominatimBaseUrl}{Constants.NominatimSearchEndpoint}" +
-                  $"?q={Uri.EscapeDataString(query)}&format=json&limit=5&addressdetails=1";
+                  $"?q={Uri.EscapeDataString(query)}&format=json&limit=5&addressdetails=1" +
+                  $"&accept-language=ru,kk,en&countrycodes=kz";
+
+        // Bias results toward user's current location (~50km radius)
+        if (userLocation != null)
+        {
+            var lat = userLocation.Latitude;
+            var lon = userLocation.Longitude;
+            url += FormattableString.Invariant($"&viewbox={lon - 0.5},{lat + 0.5},{lon + 0.5},{lat - 0.5}&bounded=0");
+        }
         
-        var response = await _httpClient.GetAsync(url);
+        var response = await GetWithRetryAsync(url);
         
         if (!response.IsSuccessStatusCode)
             throw new NavigationException($"Geocoding failed: {response.StatusCode}");
         
         var content = await response.Content.ReadAsStringAsync();
         var results = JsonSerializer.Deserialize<List<NominatimResult>>(content, _jsonOptions);
-        
-        return results?.Select(r => new GeocodingResult
+
+        var mappedResults = new List<GeocodingResult>();
+        if (results == null)
+            return mappedResults;
+
+        foreach (var result in results)
         {
-            DisplayName = r.DisplayName,
-            Location = new GeoCoordinate(
-                double.Parse(r.Lat), 
-                double.Parse(r.Lon)),
-            Type = r.Type,
-            Importance = r.Importance
-        }).ToList() ?? new List<GeocodingResult>();
+            if (!double.TryParse(result.Lat, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude) ||
+                !double.TryParse(result.Lon, NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude))
+            {
+                continue;
+            }
+
+            mappedResults.Add(new GeocodingResult
+            {
+                DisplayName = result.DisplayName,
+                Location = new GeoCoordinate(latitude, longitude),
+                Type = result.Type,
+                Importance = result.Importance
+            });
+        }
+
+        return mappedResults;
     }
     
     public async Task<string> GetAddressAsync(GeoCoordinate coordinate)
     {
         var url = $"{Constants.NominatimBaseUrl}{Constants.NominatimReverseEndpoint}" +
-                  $"?lat={coordinate.Latitude}&lon={coordinate.Longitude}&format=json";
+                  $"?lat={coordinate.Latitude}&lon={coordinate.Longitude}&format=json&accept-language=ru,kk,en";
         
-        var response = await _httpClient.GetAsync(url);
+        var response = await GetWithRetryAsync(url);
         
         if (!response.IsSuccessStatusCode)
             return "Unknown location";
@@ -112,7 +138,7 @@ public class NavigationService : INavigationService
                   $"{destination.Longitude},{destination.Latitude}" +
                   "?overview=full&geometries=polyline&steps=true";
         
-        var response = await _httpClient.GetAsync(url);
+        var response = await GetWithRetryAsync(url);
         
         if (!response.IsSuccessStatusCode)
             throw new NavigationException($"Route calculation failed: {response.StatusCode}");
@@ -157,9 +183,34 @@ public class NavigationService : INavigationService
                 });
             }
         }
+
+        if (route.Steps.Count == 0)
+        {
+            route.Steps.Add(new RouteStep
+            {
+                StepNumber = 1,
+                Instruction = "Continue to your destination",
+                DistanceMeters = route.DistanceMeters,
+                DurationSeconds = route.DurationSeconds,
+                ManeuverType = "straight",
+                Location = destination
+            });
+        }
         
         // Decode polyline for map display
-        route.RoutePoints = DecodePolyline(osrmRoute.Geometry);
+        try
+        {
+            route.RoutePoints = DecodePolyline(osrmRoute.Geometry);
+        }
+        catch
+        {
+            route.RoutePoints = new List<GeoCoordinate>();
+        }
+
+        if (route.RoutePoints.Count == 0)
+        {
+            route.RoutePoints = new List<GeoCoordinate> { origin, destination };
+        }
         
         return route;
     }
@@ -172,9 +223,11 @@ public class NavigationService : INavigationService
             throw new NavigationException("Unable to get current location.");
         
         // Search for destination
-        var searchResults = await SearchLocationAsync(destinationName);
+        var searchResults = await SearchLocationAsync(destinationName, currentLocation);
         if (searchResults.Count == 0)
             throw new NavigationException($"Could not find '{destinationName}'.");
+        if (searchResults.Count > 1)
+            throw new NavigationException($"Multiple locations found for '{destinationName}'. Please choose a specific result.");
         
         var destination = searchResults[0];
         
@@ -214,6 +267,7 @@ public class NavigationService : INavigationService
         CurrentRoute = null;
         IsNavigating = false;
         CurrentStepIndex = 0;
+        _lastRerouteAt = DateTime.MinValue;
     }
     
     private async Task UpdateNavigationAsync()
@@ -221,12 +275,44 @@ public class NavigationService : INavigationService
         if (!IsNavigating || CurrentRoute == null)
             return;
         
+        if (Interlocked.Exchange(ref _isUpdatingNavigation, 1) == 1)
+            return;
+        
         try
         {
             var currentLocation = await GetCurrentLocationAsync();
-            if (currentLocation == null)
+            if (currentLocation == null || CurrentRoute == null)
                 return;
+
+            // If user has drifted far from the current route, recalculate from current position.
+            if (CurrentRoute.RoutePoints.Count > 0)
+            {
+                var distanceToRoute = GetNearestRouteDistanceMeters(currentLocation, CurrentRoute.RoutePoints);
+                if (distanceToRoute > 60 &&
+                    DateTime.UtcNow - _lastRerouteAt > TimeSpan.FromSeconds(20))
+                {
+                    _lastRerouteAt = DateTime.UtcNow;
+                    if (CurrentRoute?.Destination == null) return;
+                    var rerouted = await CalculateRouteAsync(currentLocation, CurrentRoute.Destination);
+                    if (CurrentRoute == null) return; // StopNavigation may have been called during await
+                    rerouted.DestinationName = CurrentRoute.DestinationName;
+                    CurrentRoute = rerouted;
+                    CurrentStepIndex = 0;
+                    
+                    NavigationUpdated?.Invoke(this, new NavigationEventArgs
+                    {
+                        Route = CurrentRoute,
+                        CurrentStepIndex = CurrentStepIndex,
+                        CurrentLocation = currentLocation,
+                        Instruction = "Route updated from your current position."
+                    });
+                    return;
+                }
+            }
             
+            // Re-check after potential reroute await
+            if (CurrentRoute == null) return;
+
             // Check distance to destination
             var distanceToDestination = currentLocation.DistanceTo(CurrentRoute.Destination);
             if (distanceToDestination < 20) // Within 20 meters of destination
@@ -245,6 +331,25 @@ public class NavigationService : INavigationService
             }
             
             // Check if we should advance to next step
+            if (CurrentRoute.Steps.Count == 0)
+            {
+                NavigationUpdated?.Invoke(this, new NavigationEventArgs
+                {
+                    Route = CurrentRoute,
+                    CurrentStepIndex = 0,
+                    CurrentLocation = currentLocation,
+                    Instruction = "Route instructions unavailable. Navigation stopped for safety."
+                });
+
+                StopNavigation();
+                return;
+            }
+
+            if (CurrentStepIndex >= CurrentRoute.Steps.Count)
+            {
+                CurrentStepIndex = CurrentRoute.Steps.Count - 1;
+            }
+
             if (CurrentStepIndex < CurrentRoute.Steps.Count - 1)
             {
                 var nextStep = CurrentRoute.Steps[CurrentStepIndex + 1];
@@ -271,7 +376,52 @@ public class NavigationService : INavigationService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Navigation update error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack: {ex.StackTrace}");
+
+            // Notify user about network/routing errors so they aren't left in silence
+            if (ex is HttpRequestException || ex is TaskCanceledException)
+            {
+                NavigationUpdated?.Invoke(this, new NavigationEventArgs
+                {
+                    Instruction = "Navigation update failed. Check your connection.",
+                    CurrentLocation = null,
+                    Route = CurrentRoute
+                });
+            }
         }
+        finally
+        {
+            Interlocked.Exchange(ref _isUpdatingNavigation, 0);
+        }
+    }
+    
+    private async Task<HttpResponseMessage> GetWithRetryAsync(string url)
+    {
+        const int maxAttempts = 3;
+        var delaysMs = new[] { 300, 800, 1500 };
+        Exception? lastException = null;
+        
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync(url);
+                if (response.IsSuccessStatusCode || attempt == maxAttempts)
+                    return response;
+                
+                await Task.Delay(delaysMs[attempt - 1]);
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                if (attempt == maxAttempts)
+                    throw;
+                
+                await Task.Delay(delaysMs[attempt - 1]);
+            }
+        }
+        
+        throw new NavigationException(lastException?.Message ?? "Navigation request failed.");
     }
     
     private static string GenerateInstruction(OsrmStep step)
@@ -305,6 +455,24 @@ public class NavigationService : INavigationService
         }
         
         return action;
+    }
+    
+    private static double GetNearestRouteDistanceMeters(GeoCoordinate current, List<GeoCoordinate> routePoints)
+    {
+        if (routePoints.Count == 0)
+            return double.MaxValue;
+        
+        double minDistance = double.MaxValue;
+        foreach (var point in routePoints)
+        {
+            var distance = current.DistanceTo(point);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+            }
+        }
+        
+        return minDistance;
     }
     
     /// <summary>

@@ -13,9 +13,11 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
 {
     private InferenceSession? _session;
     private readonly object _sessionLock = new();
+    private readonly object _alertLock = new();
     private DateTime _lastDetectionTime = DateTime.MinValue;
     private readonly HashSet<string> _recentAlerts = new();
     private Timer? _alertCooldownTimer;
+    private DenseTensor<float>? _inputTensor;
     
     public bool IsModelLoaded => _session != null;
     public bool IsDetecting { get; private set; }
@@ -84,12 +86,12 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
         }
         
         IsDetecting = true;
-        _recentAlerts.Clear();
-        
+        lock (_alertLock) { _recentAlerts.Clear(); }
+
         // Clear alert cooldowns every 3 seconds
-        _alertCooldownTimer = new Timer(_ => 
+        _alertCooldownTimer = new Timer(_ =>
         {
-            _recentAlerts.Clear();
+            lock (_alertLock) { _recentAlerts.Clear(); }
         }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
     }
     
@@ -98,7 +100,7 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
         IsDetecting = false;
         _alertCooldownTimer?.Dispose();
         _alertCooldownTimer = null;
-        _recentAlerts.Clear();
+        lock (_alertLock) { _recentAlerts.Clear(); }
     }
     
     public async Task<List<DetectedObject>> ProcessFrameAsync(byte[] imageData, int width, int height)
@@ -166,12 +168,15 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
                 });
                 
                 // Check for danger alerts
-                foreach (var obj in detectedObjects.Where(o => 
-                    o.DangerLevel >= DangerLevel.High && 
-                    !_recentAlerts.Contains(o.Label)))
+                lock (_alertLock)
                 {
-                    _recentAlerts.Add(obj.Label);
-                    DangerAlert?.Invoke(this, obj);
+                    foreach (var obj in detectedObjects.Where(o =>
+                        o.DangerLevel >= DangerLevel.High &&
+                        !_recentAlerts.Contains(o.Label)))
+                    {
+                        _recentAlerts.Add(obj.Label);
+                        DangerAlert?.Invoke(this, obj);
+                    }
                 }
             }
         }
@@ -185,15 +190,14 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
     
     private DenseTensor<float> PreprocessImage(byte[] imageData, int width, int height)
     {
-        // Create input tensor [1, 3, 640, 640] for YOLOv8
+        // Reuse input tensor [1, 3, 640, 640] for YOLOv8 — avoids 4.92 MB allocation per frame
         var inputSize = Constants.ModelInputSize;
-        var tensor = new DenseTensor<float>(new[] { 1, 3, inputSize, inputSize });
-        
+        _inputTensor ??= new DenseTensor<float>(new[] { 1, 3, inputSize, inputSize });
+
         // Simple resize and normalize
-        // In production, use proper image processing library
         var scaleX = (float)width / inputSize;
         var scaleY = (float)height / inputSize;
-        
+
         for (int y = 0; y < inputSize; y++)
         {
             for (int x = 0; x < inputSize; x++)
@@ -201,18 +205,24 @@ public class ComputerVisionService : IComputerVisionService, IDisposable
                 var srcX = (int)(x * scaleX);
                 var srcY = (int)(y * scaleY);
                 var idx = (srcY * width + srcX) * 4; // RGBA
-                
+
                 if (idx + 2 < imageData.Length)
                 {
                     // Normalize to 0-1 and assign to RGB channels
-                    tensor[0, 0, y, x] = imageData[idx] / 255f;     // R
-                    tensor[0, 1, y, x] = imageData[idx + 1] / 255f; // G
-                    tensor[0, 2, y, x] = imageData[idx + 2] / 255f; // B
+                    _inputTensor[0, 0, y, x] = imageData[idx] / 255f;     // R
+                    _inputTensor[0, 1, y, x] = imageData[idx + 1] / 255f; // G
+                    _inputTensor[0, 2, y, x] = imageData[idx + 2] / 255f; // B
+                }
+                else
+                {
+                    _inputTensor[0, 0, y, x] = 0f;
+                    _inputTensor[0, 1, y, x] = 0f;
+                    _inputTensor[0, 2, y, x] = 0f;
                 }
             }
         }
-        
-        return tensor;
+
+        return _inputTensor;
     }
     
     private List<DetectedObject> ParseYoloOutput(Tensor<float> output, int originalWidth, int originalHeight)

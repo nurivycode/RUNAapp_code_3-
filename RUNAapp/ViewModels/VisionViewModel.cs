@@ -118,12 +118,8 @@ public partial class VisionViewModel : BaseViewModel
     [RelayCommand]
     private async Task GoBackAsync()
     {
-        if (IsDetecting)
-        {
-            _visionService.StopDetection();
-        }
-        
-        await Shell.Current.GoToAsync("..");
+        // Navigate immediately — OnDisappearing handles camera/detection cleanup
+        await Shell.Current.GoToAsync("//Dashboard");
     }
     
     /// <summary>
@@ -166,37 +162,51 @@ public partial class VisionViewModel : BaseViewModel
     
     private async void OnObjectsDetected(object? sender, DetectionEventArgs e)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
+        try
         {
-            DetectedObjects = e.DetectedObjects;
-            DetectionCount = e.DetectedObjects.Count;
-            LastDetection = e.Description;
-            
-            // Update bounding box drawable
-            if (BoundingBoxDrawable != null)
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                BoundingBoxDrawable.DetectedObjects = e.DetectedObjects;
-            }
-            
-            DetectionStatus = e.DetectedObjects.Count > 0 
-                ? $"Detected {e.DetectedObjects.Count} object(s)" 
-                : "Clear path";
-        });
+                DetectedObjects = e.DetectedObjects;
+                DetectionCount = e.DetectedObjects.Count;
+                LastDetection = e.Description;
+
+                // Update bounding box drawable
+                if (BoundingBoxDrawable != null)
+                {
+                    BoundingBoxDrawable.DetectedObjects = e.DetectedObjects;
+                }
+
+                DetectionStatus = e.DetectedObjects.Count > 0
+                    ? $"Detected {e.DetectedObjects.Count} object(s)"
+                    : "Clear path";
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ObjectsDetected handler error: {ex.Message}");
+        }
     }
-    
+
     private async void OnDangerAlert(object? sender, DetectedObject obj)
     {
-        var positionText = obj.Position switch
+        try
         {
-            RelativePosition.Left => "on your left",
-            RelativePosition.Right => "on your right",
-            _ => "directly ahead"
-        };
-        
-        var alertMessage = obj.DangerLevel == DangerLevel.Critical
-            ? $"Stop! {obj.Label} {positionText}!"
-            : $"Caution! {obj.Label} {positionText}.";
-        
-        await _ttsService.SpeakAlertAsync(alertMessage);
+            var positionText = obj.Position switch
+            {
+                RelativePosition.Left => "on your left",
+                RelativePosition.Right => "on your right",
+                _ => "directly ahead"
+            };
+
+            var alertMessage = obj.DangerLevel == DangerLevel.Critical
+                ? $"Stop! {obj.Label} {positionText}!"
+                : $"Caution! {obj.Label} {positionText}.";
+
+            await _ttsService.SpeakAlertAsync(alertMessage);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"DangerAlert handler error: {ex.Message}");
+        }
     }
 }

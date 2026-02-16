@@ -82,10 +82,14 @@ public partial class SettingsViewModel : BaseViewModel
 
             if (!string.IsNullOrEmpty(idToken))
             {
-                // Load user profile
+                // Fire both requests in parallel to halve cold-start wait
+                var profileTask = _firestoreService.GetUserProfileAsync(idToken);
+                var settingsTask = _firestoreService.GetUserSettingsAsync(idToken);
+
+                // Await profile
                 try
                 {
-                    var profile = await _firestoreService.GetUserProfileAsync(idToken);
+                    var profile = await profileTask;
                     if (profile != null)
                     {
                         UserEmail = profile.Email;
@@ -98,10 +102,10 @@ public partial class SettingsViewModel : BaseViewModel
                     SetError($"Error getting user profile: {ex.Message}");
                 }
 
-                // Load user settings
+                // Await settings
                 try
                 {
-                    var settings = await _firestoreService.GetUserSettingsAsync(idToken);
+                    var settings = await settingsTask;
                     VoiceFeedbackEnabled = settings.VoiceFeedbackEnabled;
                     HapticFeedbackEnabled = settings.HapticFeedbackEnabled;
                     SensitivityMode = settings.SensitivityMode;
@@ -178,14 +182,7 @@ public partial class SettingsViewModel : BaseViewModel
         await SaveSettingsAsync();
 
         await _ttsService.SpeakAsync("Going back to dashboard.");
-        await Shell.Current.GoToAsync("..");
-    }
-
-    [RelayCommand]
-    private async Task GoToSetupAsync()
-    {
-        await _ttsService.SpeakAsync("Opening API configuration.");
-        await Shell.Current.GoToAsync("//Setup");
+        await Shell.Current.GoToAsync("//Dashboard");
     }
 
     [RelayCommand]

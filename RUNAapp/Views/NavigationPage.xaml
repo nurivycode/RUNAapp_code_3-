@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:RUNAapp.ViewModels"
              xmlns:services="clr-namespace:RUNAapp.Services"
+             xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
              x:Class="RUNAapp.Views.NavigationPage"
              x:DataType="viewmodels:NavigationViewModel"
              BackgroundColor="{StaticResource RunaBackground}"
@@ -39,8 +40,8 @@
                 
                 <!-- Search Bar -->
                 <Frame BackgroundColor="{StaticResource RunaWhite}"
-                       CornerRadius="12"
-                       Padding="0"
+                        CornerRadius="12"
+                        Padding="0"
                        HasShadow="False">
                     <Grid ColumnDefinitions="*, Auto">
                         <Entry Grid.Column="0"
@@ -51,6 +52,9 @@
                                FontSize="16"
                                HeightRequest="48"
                                Margin="16,0"
+                               TextColor="{StaticResource RunaPrimary}"
+                               BackgroundColor="{StaticResource RunaWhite}"
+                               PlaceholderColor="{StaticResource Gray400}"
                                SemanticProperties.Description="Destination search field"/>
                         
                         <Button Grid.Column="1"
@@ -66,16 +70,28 @@
         </Frame>
 
         <!-- Main Content -->
-        <ScrollView Grid.Row="1" Padding="24">
-            <VerticalStackLayout Spacing="16">
-                
-                <!-- Loading Indicator -->
+        <Grid Grid.Row="1"
+              RowDefinitions="Auto,Auto,*,Auto"
+              Padding="24,16,24,0">
+
+            <!-- Row 0: Map -->
+            <Frame Grid.Row="0"
+                   Style="{StaticResource CardFrame}"
+                   Padding="0">
+                <mapsui:MapControl x:Name="NavigationMap"
+                                   HeightRequest="260"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill"
+                                   SemanticProperties.Description="Navigation map preview"/>
+            </Frame>
+
+            <!-- Row 1: Loading + Error -->
+            <VerticalStackLayout Grid.Row="1" Spacing="8" Margin="0,16,0,0">
                 <ActivityIndicator IsRunning="{Binding IsBusy}"
                                    IsVisible="{Binding IsBusy}"
                                    Color="{StaticResource RunaSecondary}"
                                    HeightRequest="40"/>
 
-                <!-- Error Message -->
                 <Frame IsVisible="{Binding HasError}"
                        BackgroundColor="{StaticResource RunaDanger}"
                        CornerRadius="8"
@@ -85,44 +101,52 @@
                            TextColor="{StaticResource RunaWhite}"
                            FontSize="14"/>
                 </Frame>
+            </VerticalStackLayout>
 
-                <!-- Search Results -->
-                <VerticalStackLayout Spacing="8"
-                                     IsVisible="{Binding SearchResults.Count, Converter={StaticResource IntToBoolConverter}}">
+            <!-- Row 2: Search Results (CollectionView handles its own scrolling — no ScrollView wrapper) -->
+            <CollectionView Grid.Row="2"
+                            ItemsSource="{Binding SearchResults}"
+                            SelectionMode="None"
+                            Margin="0,8,0,0">
+                <CollectionView.Header>
                     <Label Text="Search Results"
-                           Style="{StaticResource TitleSmall}"/>
-                    
-                    <CollectionView ItemsSource="{Binding SearchResults}"
-                                    SelectionMode="Single"
-                                    SelectionChangedCommand="{Binding SelectDestinationCommand}"
-                                    SelectionChangedCommandParameter="{Binding ., Source={RelativeSource Self}}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="services:GeocodingResult">
-                                <Frame Style="{StaticResource CardFrame}" Margin="0,4" Padding="16">
-                                    <VerticalStackLayout>
-                                        <Label Text="{Binding DisplayName}"
-                                               FontSize="16"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource RunaTextPrimary}"
-                                               LineBreakMode="TailTruncation"
-                                               MaxLines="2"/>
-                                        <Label Text="{Binding Type}"
-                                               FontSize="12"
-                                               TextColor="{StaticResource RunaTextSecondary}"/>
-                                    </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
+                           Style="{StaticResource TitleSmall}"
+                           Margin="0,0,0,8"
+                           IsVisible="{Binding SearchResults.Count, Converter={StaticResource IntToBoolConverter}}"/>
+                </CollectionView.Header>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="services:GeocodingResult">
+                        <Frame Style="{StaticResource CardFrame}" Margin="0,4" Padding="16">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:NavigationViewModel}}, Path=SelectDestinationCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Frame.GestureRecognizers>
+                            <VerticalStackLayout>
+                                <Label Text="{Binding DisplayName}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource RunaTextPrimary}"
+                                       LineBreakMode="TailTruncation"
+                                       MaxLines="2"/>
+                                <Label Text="{Binding Type}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource RunaTextSecondary}"/>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
+            <!-- Row 3: Route Information / Empty State -->
+            <VerticalStackLayout Grid.Row="3" Spacing="16" Margin="0,8,0,0">
                 <!-- Route Information -->
                 <Frame IsVisible="{Binding CurrentRoute, Converter={StaticResource ObjectToBoolConverter}}"
                        Style="{StaticResource CardFrame}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Route Details"
                                Style="{StaticResource TitleSmall}"/>
-                        
+
                         <Grid ColumnDefinitions="*, *" RowSpacing="8">
                             <VerticalStackLayout>
                                 <Label Text="Distance"
@@ -131,9 +155,9 @@
                                 <Label Text="{Binding DistanceRemaining}"
                                        FontSize="20"
                                        FontAttributes="Bold"
-                                       TextColor="{StaticResource RunaPrimary}"/>
+                                       TextColor="{StaticResource RunaSecondary}"/>
                             </VerticalStackLayout>
-                            
+
                             <VerticalStackLayout Grid.Column="1">
                                 <Label Text="Estimated Time"
                                        FontSize="12"
@@ -141,12 +165,12 @@
                                 <Label Text="{Binding TimeRemaining}"
                                        FontSize="20"
                                        FontAttributes="Bold"
-                                       TextColor="{StaticResource RunaPrimary}"/>
+                                       TextColor="{StaticResource RunaSecondary}"/>
                             </VerticalStackLayout>
                         </Grid>
-                        
-                        <BoxView HeightRequest="1" Color="{StaticResource Gray200}"/>
-                        
+
+                        <BoxView HeightRequest="1" Color="{StaticResource Gray600}"/>
+
                         <!-- Current Instruction -->
                         <Frame BackgroundColor="{StaticResource RunaSecondary}"
                                CornerRadius="8"
@@ -172,12 +196,12 @@
                            FontAttributes="Bold"
                            TextColor="{StaticResource RunaTextPrimary}"
                            HorizontalOptions="Center"/>
-                    <Label Text="Enter a destination above or say 'Take me to' followed by your destination."
+                    <Label Text="Say 'Take me to' followed by your destination."
                            Style="{StaticResource BodyMedium}"
                            HorizontalTextAlignment="Center"/>
                 </VerticalStackLayout>
             </VerticalStackLayout>
-        </ScrollView>
+        </Grid>
 
         <!-- Bottom Actions -->
         <Frame Grid.Row="2"
@@ -189,10 +213,18 @@
             <Grid ColumnDefinitions="*, *" ColumnSpacing="16">
                 
                 <Button Grid.Column="0"
-                        Text="{Binding IsNavigating, Converter={StaticResource BoolToNavButtonTextConverter}}"
-                        Command="{Binding IsNavigating, Converter={StaticResource BoolToNavCommandConverter}}"
+                        Text="Start"
+                        Command="{Binding StartNavigationCommand}"
                         Style="{StaticResource PrimaryButton}"
-                        SemanticProperties.Description="Start or stop navigation"/>
+                        IsVisible="{Binding IsNotNavigating}"
+                        SemanticProperties.Description="Start navigation"/>
+                
+                <Button Grid.Column="0"
+                        Text="Stop"
+                        Command="{Binding StopNavigationCommand}"
+                        Style="{StaticResource PrimaryButton}"
+                        IsVisible="{Binding IsNavigating}"
+                        SemanticProperties.Description="Stop navigation"/>
                 
                 <Button Grid.Column="1"
                         Text="Repeat"

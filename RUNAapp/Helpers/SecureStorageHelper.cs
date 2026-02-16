@@ -4,12 +4,14 @@ public static class SecureStorageHelper
 {
     public static async Task<string?> GetFirebaseApiKeyAsync()
     {
-        return Constants.HardcodedFirebaseApiKey;
+        var config = await AppConfigHelper.GetFirebaseConfigAsync();
+        return config?.ApiKey;
     }
 
     public static async Task SetFirebaseApiKeyAsync(string apiKey)
     {
         await SecureStorage.Default.SetAsync(Constants.FirebaseApiKeyStorage, apiKey);
+        AppConfigHelper.ResetCache();
     }
 
     public static async Task SetFirebaseConfigAsync(
@@ -32,20 +34,13 @@ public static class SecureStorageHelper
         {
             await SecureStorage.Default.SetAsync(Constants.FirebaseMeasurementIdStorage, measurementId);
         }
+
+        AppConfigHelper.ResetCache();
     }
 
     public static async Task<FirebaseConfig?> GetFirebaseConfigAsync()
     {
-        return new FirebaseConfig
-        {
-            ApiKey = Constants.HardcodedFirebaseApiKey,
-            AuthDomain = Constants.HardcodedFirebaseAuthDomain,
-            ProjectId = Constants.HardcodedFirebaseProjectId,
-            StorageBucket = Constants.HardcodedFirebaseStorageBucket,
-            MessagingSenderId = Constants.HardcodedFirebaseMessagingSenderId,
-            AppId = Constants.HardcodedFirebaseAppId,
-            MeasurementId = Constants.HardcodedFirebaseMeasurementId
-        };
+        return await AppConfigHelper.GetFirebaseConfigAsync();
     }
 
     public static async Task SaveAuthTokensAsync(string idToken, string refreshToken, string userId)
@@ -86,9 +81,42 @@ public static class SecureStorageHelper
         return config != null && !string.IsNullOrEmpty(config.ApiKey);
     }
 
+    public static async Task<string> GetOrCreateDeviceIdAsync()
+    {
+        string? deviceId = null;
+
+#if ANDROID
+        try
+        {
+            deviceId = Android.Provider.Settings.Secure.GetString(
+                Android.App.Application.Context.ContentResolver,
+                Android.Provider.Settings.Secure.AndroidId);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reading Android ID: {ex.Message}");
+        }
+#endif
+
+        if (string.IsNullOrWhiteSpace(deviceId))
+        {
+            var existing = await SecureStorage.Default.GetAsync(Constants.DeviceIdStorage);
+            if (!string.IsNullOrWhiteSpace(existing))
+            {
+                return existing;
+            }
+
+            deviceId = Guid.NewGuid().ToString("N");
+        }
+
+        await SecureStorage.Default.SetAsync(Constants.DeviceIdStorage, deviceId);
+        return deviceId;
+    }
+
     public static void ClearAll()
     {
         SecureStorage.Default.RemoveAll();
+        AppConfigHelper.ResetCache();
     }
 }
 

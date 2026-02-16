@@ -31,4 +31,9 @@ public interface IOpenAIService
     /// <param name="systemPrompt">Optional system prompt override.</param>
     /// <returns>GPT response text.</returns>
     Task<string> GetChatResponseAsync(string userMessage, string? systemPrompt = null);
+
+    /// <summary>
+    /// Sends a lightweight warmup request to reduce backend cold-start latency.
+    /// </summary>
+    Task WarmupAsync();
 }

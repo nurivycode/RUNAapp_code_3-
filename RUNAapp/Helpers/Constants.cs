@@ -14,6 +14,7 @@ public static class Constants
     public const string FirebaseAuthTokenStorage = "firebase_auth_token";
     public const string FirebaseRefreshTokenStorage = "firebase_refresh_token";
     public const string FirebaseUserIdStorage = "firebase_user_id";
+    public const string DeviceIdStorage = "device_id";
     
     // ═══════════════════════════════════════════════════════════════════════
     // Firebase Configuration Keys
@@ -33,6 +34,7 @@ public static class Constants
     public const string FirebaseAuthBaseUrl = "https://identitytoolkit.googleapis.com/v1";
     public const string FirebaseSignUpEndpoint = "/accounts:signUp";
     public const string FirebaseSignInEndpoint = "/accounts:signInWithPassword";
+    public const string FirebaseSignInWithCustomTokenEndpoint = "/accounts:signInWithCustomToken";
     public const string FirebaseRefreshTokenEndpoint = "https://securetoken.googleapis.com/v1/token";
     public const string FirebaseUserInfoEndpoint = "/accounts:lookup";
     public const string FirebasePasswordResetEndpoint = "/accounts:sendOobCode";
@@ -50,6 +52,7 @@ public static class Constants
     public const string FirestoreGetUserSettingsEndpoint = "/getUserSettings";
     public const string FirestoreSaveUserSettingsEndpoint = "/saveUserSettings";
     public const string FirestoreCreateUserProfileEndpoint = "/createUserProfile";
+    public const string VerifyAccessCodeEndpoint = "/verifyAccessCode";
     
     // ═══════════════════════════════════════════════════════════════════════
     // OpenAI API Configuration (Direct - used if BackendBaseUrl is empty)
@@ -64,16 +67,15 @@ public static class Constants
     // ═══════════════════════════════════════════════════════════════════════
     // API Keys - Use SecureStorage or appsettings.json in production
     // ═══════════════════════════════════════════════════════════════════════
-    // NOTE: These are placeholders. In production, load from SecureStorage or appsettings.json
-    // See SetupViewModel.cs for secure key storage implementation
-    public const string HardcodedOpenAIApiKey = "YOUR_OPENAI_API_KEY_HERE"; // Replace with actual key or load from SecureStorage
-    public const string HardcodedFirebaseApiKey = "YOUR_FIREBASE_API_KEY_HERE"; // Replace with actual key or load from SecureStorage
-    public const string HardcodedFirebaseAuthDomain = "your-project.firebaseapp.com"; // Replace with your Firebase project domain
-    public const string HardcodedFirebaseProjectId = "your-project-id"; // Replace with your Firebase project ID
-    public const string HardcodedFirebaseStorageBucket = "your-project.appspot.com"; // Replace with your Firebase storage bucket
-    public const string HardcodedFirebaseMessagingSenderId = "YOUR_SENDER_ID_HERE"; // Replace with your Firebase messaging sender ID
-    public const string HardcodedFirebaseAppId = "1:628120110180:web:8e09a6793f8b181657cb71";
-    public const string HardcodedFirebaseMeasurementId = "G-YYJQBFH7ER";
+    // NOTE: These are placeholders. In production, load from appsettings.json
+    public const string HardcodedOpenAIApiKey = "";
+    public const string HardcodedFirebaseApiKey = "";
+    public const string HardcodedFirebaseAuthDomain = "";
+    public const string HardcodedFirebaseProjectId = "";
+    public const string HardcodedFirebaseStorageBucket = "";
+    public const string HardcodedFirebaseMessagingSenderId = "";
+    public const string HardcodedFirebaseAppId = "";
+    public const string HardcodedFirebaseMeasurementId = "";
     
     // ═══════════════════════════════════════════════════════════════════════
     // OSRM (Open Source Routing Machine) Configuration
@@ -90,6 +92,13 @@ public static class Constants
     public const string NominatimBaseUrl = "https://nominatim.openstreetmap.org";
     public const string NominatimSearchEndpoint = "/search";
     public const string NominatimReverseEndpoint = "/reverse";
+    
+    // Developer mode keeps manual testing UI visible.
+    // Set to false for voice-first production UX.
+    public const bool EnableDeveloperMode = false;
+
+    // Temporary switch for navigation speech while map flow is being stabilized.
+    public const bool EnableNavigationVoiceFeedback = true;
     
     // ═══════════════════════════════════════════════════════════════════════
     // Computer Vision Configuration

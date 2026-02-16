@@ -34,25 +34,13 @@ public partial class WelcomeViewModel : BaseViewModel
         {
             await _ttsService.SpeakAsync(
                 "Welcome to RUNA, your accessible navigation assistant. " +
-                "Please sign in or create an account to continue.");
+                "Please enter your access code to continue.");
         }
     }
     
     [RelayCommand]
-    private async Task GoToLoginAsync()
+    private async Task GoToAccessCodeAsync()
     {
-        await Shell.Current.GoToAsync("//Login");
-    }
-    
-    [RelayCommand]
-    private async Task GoToRegisterAsync()
-    {
-        await Shell.Current.GoToAsync("//Register");
-    }
-    
-    [RelayCommand]
-    private async Task GoToSetupAsync()
-    {
-        await Shell.Current.GoToAsync("//Setup");
+        await Shell.Current.GoToAsync("//AccessCode");
     }
 }

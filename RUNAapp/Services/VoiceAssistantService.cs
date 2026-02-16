@@ -11,12 +11,12 @@ namespace RUNAapp.Services;
 public class VoiceAssistantService : IVoiceAssistantService
 {
     private readonly IOpenAIService _openAIService;
+    private readonly IDeterministicIntentService _deterministicIntentService;
     private readonly ITextToSpeechService _ttsService;
     private readonly IAudioManager _audioManager;
     
     private IAudioRecorder? _recorder;
     private CancellationTokenSource? _recordingCts;
-    private DateTime _recordingStartTime;
     
     public bool IsListening { get; private set; }
     public bool IsProcessing { get; private set; }
@@ -29,10 +29,12 @@ public class VoiceAssistantService : IVoiceAssistantService
     
     public VoiceAssistantService(
         IOpenAIService openAIService,
+        IDeterministicIntentService deterministicIntentService,
         ITextToSpeechService ttsService,
         IAudioManager audioManager)
     {
         _openAIService = openAIService;
+        _deterministicIntentService = deterministicIntentService;
         _ttsService = ttsService;
         _audioManager = audioManager;
     }
@@ -57,7 +59,6 @@ public class VoiceAssistantService : IVoiceAssistantService
             }
             
             IsListening = true;
-            _recordingStartTime = DateTime.UtcNow;
             _recordingCts = new CancellationTokenSource();
             
             OnStateChanged(VoiceAssistantState.Listening, "Listening...");
@@ -124,47 +125,13 @@ public class VoiceAssistantService : IVoiceAssistantService
                 return null;
             }
             
-            // Calculate recording duration
-            var duration = (DateTime.UtcNow - _recordingStartTime).TotalSeconds;
-            
-            // Transcribe audio
+            // Let Whisper auto-detect language to support multilingual voice input.
             var transcript = await _openAIService.TranscribeAudioAsync(
-                audioData, 
+                audioData,
                 "recording.m4a",
-                "en"); // Default to English
-            
-            if (string.IsNullOrWhiteSpace(transcript))
-            {
-                OnError("Could not understand. Please try again.");
-                return null;
-            }
-            
-            TranscriptAvailable?.Invoke(this, transcript);
-            
-            // Classify intent
-            var intentResult = await _openAIService.ClassifyIntentAsync(transcript);
-            
-            // Speak response (if empty, use default message)
-            var responseText = intentResult.Response;
-            if (string.IsNullOrWhiteSpace(responseText))
-            {
-                // Default response if GPT didn't provide one
-                responseText = $"Understood: {intentResult.Action}. ";
-                if (intentResult.Parameters.Count > 0)
-                {
-                    responseText += string.Join(", ", intentResult.Parameters.Values);
-                }
-            }
-            
-            OnStateChanged(VoiceAssistantState.Speaking, responseText);
-            LastResponse = responseText;
-            await _ttsService.SpeakAsync(responseText);
-            
-            IntentClassified?.Invoke(this, intentResult);
-            
-            OnStateChanged(VoiceAssistantState.Idle);
-            
-            return intentResult;
+                null);
+
+            return await ProcessTranscriptAsync(transcript);
         }
         catch (Exception ex)
         {
@@ -199,6 +166,73 @@ public class VoiceAssistantService : IVoiceAssistantService
             IsProcessing = false;
             OnStateChanged(VoiceAssistantState.Idle, "Cancelled");
         }
+    }
+    
+    public async Task<IntentResult?> ProcessTextCommandAsync(string commandText)
+    {
+        if (string.IsNullOrWhiteSpace(commandText))
+            return null;
+        
+        if (IsListening)
+        {
+            await CancelAsync();
+        }
+        
+        try
+        {
+            IsProcessing = true;
+            OnStateChanged(VoiceAssistantState.Processing, "Processing command...");
+            return await ProcessTranscriptAsync(commandText.Trim());
+        }
+        catch (Exception ex)
+        {
+            OnError($"Command processing error: {ex.Message}");
+            return null;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+    
+    private async Task<IntentResult?> ProcessTranscriptAsync(string transcript)
+    {
+        if (string.IsNullOrWhiteSpace(transcript))
+        {
+            OnError("Could not understand. Please try again.");
+            return null;
+        }
+        
+        TranscriptAvailable?.Invoke(this, transcript);
+
+        if (_deterministicIntentService.TryClassify(transcript, out var deterministicIntent))
+        {
+            return await RespondWithIntentAsync(deterministicIntent);
+        }
+
+        var intentResult = await _openAIService.ClassifyIntentAsync(transcript);
+        return await RespondWithIntentAsync(intentResult);
+    }
+
+    private async Task<IntentResult> RespondWithIntentAsync(IntentResult intentResult)
+    {
+        var responseText = intentResult.Response;
+        if (string.IsNullOrWhiteSpace(responseText))
+        {
+            responseText = $"Understood: {intentResult.Action}.";
+            if (intentResult.Parameters.Count > 0)
+            {
+                responseText += $" {string.Join(", ", intentResult.Parameters.Values)}";
+            }
+        }
+
+        OnStateChanged(VoiceAssistantState.Speaking, responseText);
+        LastResponse = responseText;
+        await _ttsService.SpeakAsync(responseText);
+
+        IntentClassified?.Invoke(this, intentResult);
+        OnStateChanged(VoiceAssistantState.Idle);
+        return intentResult;
     }
     
     private void OnStateChanged(VoiceAssistantState state, string? message = null)

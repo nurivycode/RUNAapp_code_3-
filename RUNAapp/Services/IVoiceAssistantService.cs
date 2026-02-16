@@ -38,6 +38,12 @@ public interface IVoiceAssistantService
     Task CancelAsync();
     
     /// <summary>
+    /// Processes a typed command through the same intent pipeline as voice.
+    /// Useful for developer testing and fallback input.
+    /// </summary>
+    Task<IntentResult?> ProcessTextCommandAsync(string commandText);
+    
+    /// <summary>
     /// Event fired when listening state changes.
     /// </summary>
     event EventHandler<VoiceAssistantStateEventArgs>? StateChanged;

@@ -27,10 +27,10 @@
     <Color x:Key="RunaWhite">#FFFFFF</Color>
     <Color x:Key="RunaBlack">#000000</Color>
     <Color x:Key="RunaBackground">#051F45</Color>
-    <Color x:Key="RunaSurface">#051F45</Color>
+    <Color x:Key="RunaSurface">#0A3260</Color>
     
     <!-- Text Colors -->
-    <Color x:Key="RunaTextPrimary">#051F45</Color>
+    <Color x:Key="RunaTextPrimary">#E8ECF1</Color>
     <Color x:Key="RunaTextSecondary">#5A6B7D</Color>
     <Color x:Key="RunaTextOnPrimary">#FFFFFF</Color>
     <Color x:Key="RunaTextOnSecondary">#051F45</Color>

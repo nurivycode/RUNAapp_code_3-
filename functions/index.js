@@ -247,6 +247,75 @@ async function verifyIdToken(req) {
   return decodedToken;
 }
 
+// API: Verify Access Code
+// POST /verifyAccessCode
+// Body: { accessCode: string, deviceId: string }
+exports.verifyAccessCode = functions.https.onRequest(async (req, res) => {
+  return cors(req, res, async () => {
+    try {
+      if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method not allowed" });
+      }
+
+      const { accessCode, deviceId } = req.body;
+
+      if (!accessCode || !deviceId) {
+        return res.status(400).json({ error: "Missing accessCode or deviceId" });
+      }
+
+      const normalizedCode = String(accessCode).trim().toUpperCase();
+      const codeRef = db.collection("accessCodes").doc(normalizedCode);
+
+      const token = await db.runTransaction(async (tx) => {
+        const codeSnap = await tx.get(codeRef);
+        if (!codeSnap.exists) {
+          throw new Error("INVALID_ACCESS_CODE");
+        }
+
+        const data = codeSnap.data() || {};
+        if (data.active === false) {
+          throw new Error("ACCESS_CODE_INACTIVE");
+        }
+
+        const boundDeviceId = data.boundDeviceId;
+        if (boundDeviceId && boundDeviceId !== deviceId) {
+          throw new Error("ACCESS_CODE_IN_USE");
+        }
+
+        if (!boundDeviceId) {
+          tx.update(codeRef, {
+            boundDeviceId: deviceId,
+            firstUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        tx.update(codeRef, {
+          lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        const uid = `code_${normalizedCode}`;
+        return admin.auth().createCustomToken(uid, { accessCode: normalizedCode });
+      });
+
+      return res.status(200).json({ token });
+    } catch (error) {
+      console.error("Verify access code error:", error.message);
+
+      if (error.message === "INVALID_ACCESS_CODE") {
+        return res.status(404).json({ error: "Invalid access code" });
+      }
+      if (error.message === "ACCESS_CODE_INACTIVE") {
+        return res.status(403).json({ error: "Access code is inactive" });
+      }
+      if (error.message === "ACCESS_CODE_IN_USE") {
+        return res.status(403).json({ error: "Access code already bound to another device" });
+      }
+
+      return res.status(500).json({ error: error.message });
+    }
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════════
 // API: Get User Profile
 // GET /getUserProfile

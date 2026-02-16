@@ -128,21 +128,25 @@ public class CameraFrameHandler : Java.Lang.Object, ICameraFrameProvider, ImageA
         if (!_isActive)
             return;
 
+        _isActive = false; // Stop frame processing immediately
+
         try
         {
-            _cameraProvider?.UnbindAll();
-            _imageAnalysis?.ClearAnalyzer();
+            // UnbindAll is a synchronous CameraX call that can take 500-1000ms.
+            // Run on background thread to avoid blocking the UI.
+            await Task.Run(() =>
+            {
+                _cameraProvider?.UnbindAll();
+                _imageAnalysis?.ClearAnalyzer();
+            });
             _imageAnalysis = null;
             _preview = null;
             _cameraProvider = null;
-            _isActive = false;
         }
         catch (System.Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"CameraX stop error: {ex.Message}");
         }
-
-        await Task.CompletedTask;
     }
 
     public void Analyze(IImageProxy image)

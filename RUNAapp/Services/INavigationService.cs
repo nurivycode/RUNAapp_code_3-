@@ -17,7 +17,7 @@ public interface INavigationService
     /// </summary>
     /// <param name="query">Search query (address, place name, etc.).</param>
     /// <returns>List of matching locations.</returns>
-    Task<List<GeocodingResult>> SearchLocationAsync(string query);
+    Task<List<GeocodingResult>> SearchLocationAsync(string query, GeoCoordinate? userLocation = null);
     
     /// <summary>
     /// Gets address information for coordinates (reverse geocoding).

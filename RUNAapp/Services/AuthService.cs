@@ -25,9 +25,7 @@ public class AuthService : IAuthService
     
     public async Task<User> SignUpAsync(string email, string password)
     {
-        var apiKey = await SecureStorageHelper.GetFirebaseApiKeyAsync();
-        if (string.IsNullOrEmpty(apiKey))
-            throw new InvalidOperationException("Firebase API key not configured. Please set up your API keys first.");
+        var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
         
         var url = $"{Constants.FirebaseAuthBaseUrl}{Constants.FirebaseSignUpEndpoint}?key={apiKey}";
         
@@ -76,9 +74,7 @@ public class AuthService : IAuthService
     
     public async Task<User> SignInAsync(string email, string password)
     {
-        var apiKey = await SecureStorageHelper.GetFirebaseApiKeyAsync();
-        if (string.IsNullOrEmpty(apiKey))
-            throw new InvalidOperationException("Firebase API key not configured. Please set up your API keys first.");
+        var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
         
         var url = $"{Constants.FirebaseAuthBaseUrl}{Constants.FirebaseSignInEndpoint}?key={apiKey}";
         
@@ -124,6 +120,82 @@ public class AuthService : IAuthService
         
         return _currentUser;
     }
+
+    public async Task<User> SignInWithAccessCodeAsync(string accessCode, string deviceId)
+    {
+        if (string.IsNullOrWhiteSpace(accessCode))
+            throw new AuthException("Please enter your access code.");
+
+        if (string.IsNullOrWhiteSpace(deviceId))
+            throw new AuthException("Device ID is missing.");
+
+        var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
+
+        if (string.IsNullOrWhiteSpace(Constants.BackendBaseUrl))
+            throw new InvalidOperationException("Backend base URL not configured.");
+
+        var verifyUrl = $"{Constants.BackendBaseUrl}{Constants.VerifyAccessCodeEndpoint}";
+        var verifyRequest = new
+        {
+            accessCode = accessCode.Trim().ToUpperInvariant(),
+            deviceId = deviceId
+        };
+
+        var verifyResponse = await _httpClient.PostAsJsonAsync(verifyUrl, verifyRequest);
+        var verifyContent = await verifyResponse.Content.ReadAsStringAsync();
+
+        if (!verifyResponse.IsSuccessStatusCode)
+        {
+            var error = JsonSerializer.Deserialize<SimpleErrorResponse>(verifyContent,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            throw new AuthException(error?.Error ?? "Access code verification failed.");
+        }
+
+        var verifyPayload = JsonSerializer.Deserialize<AccessCodeVerifyResponse>(verifyContent,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (verifyPayload == null || string.IsNullOrWhiteSpace(verifyPayload.Token))
+            throw new AuthException("Access code verification failed.");
+
+        var signInUrl = $"{Constants.FirebaseAuthBaseUrl}{Constants.FirebaseSignInWithCustomTokenEndpoint}?key={apiKey}";
+        var signInRequest = new
+        {
+            token = verifyPayload.Token,
+            returnSecureToken = true
+        };
+
+        var response = await _httpClient.PostAsJsonAsync(signInUrl, signInRequest);
+        var content = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = JsonSerializer.Deserialize<FirebaseErrorResponse>(content,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            throw new AuthException(ParseFirebaseError(error?.Error?.Message ?? "Unknown error"));
+        }
+
+        var authResponse = JsonSerializer.Deserialize<FirebaseAuthResponse>(content,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (authResponse == null)
+            throw new AuthException("Failed to parse authentication response");
+
+        await SecureStorageHelper.SaveAuthTokensAsync(
+            authResponse.IdToken,
+            authResponse.RefreshToken,
+            authResponse.LocalId);
+
+        _currentUser = new User
+        {
+            Uid = authResponse.LocalId,
+            Email = authResponse.Email,
+            EmailVerified = false,
+            LastLoginAt = DateTime.UtcNow
+        };
+
+        AuthStateChanged?.Invoke(this, _currentUser);
+        return _currentUser;
+    }
     
     public async Task SignOutAsync()
     {
@@ -134,9 +206,7 @@ public class AuthService : IAuthService
     
     public async Task SendPasswordResetEmailAsync(string email)
     {
-        var apiKey = await SecureStorageHelper.GetFirebaseApiKeyAsync();
-        if (string.IsNullOrEmpty(apiKey))
-            throw new InvalidOperationException("Firebase API key not configured.");
+        var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
         
         var url = $"{Constants.FirebaseAuthBaseUrl}{Constants.FirebasePasswordResetEndpoint}?key={apiKey}";
         
@@ -170,7 +240,7 @@ public class AuthService : IAuthService
             await RefreshTokenAsync();
             
             // Get user info
-            var apiKey = await SecureStorageHelper.GetFirebaseApiKeyAsync();
+            var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
             if (string.IsNullOrEmpty(apiKey))
                 return false;
             
@@ -213,7 +283,7 @@ public class AuthService : IAuthService
     
     public async Task RefreshTokenAsync()
     {
-        var apiKey = await SecureStorageHelper.GetFirebaseApiKeyAsync();
+        var apiKey = EnsureFirebaseApiKey(await SecureStorageHelper.GetFirebaseApiKeyAsync());
         var (_, refreshToken, _) = await SecureStorageHelper.GetAuthTokensAsync();
         
         if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(refreshToken))
@@ -254,9 +324,31 @@ public class AuthService : IAuthService
             "USER_DISABLED" => "This account has been disabled.",
             "TOO_MANY_ATTEMPTS_TRY_LATER" => "Too many attempts. Please try again later.",
             "INVALID_LOGIN_CREDENTIALS" => "Invalid email or password.",
+            "INVALID_CUSTOM_TOKEN" => "Access code is invalid or expired.",
             _ => $"Authentication error: {errorCode}"
         };
     }
+
+    private static string EnsureFirebaseApiKey(string? apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+            throw new InvalidOperationException("Firebase API key not configured. Please set up your API keys first.");
+
+        if (apiKey.Contains("YOUR_FIREBASE_API_KEY", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Firebase API key is still a placeholder. Please replace it with your real key.");
+
+        return apiKey;
+    }
+}
+
+public class AccessCodeVerifyResponse
+{
+    public string Token { get; set; } = string.Empty;
+}
+
+public class SimpleErrorResponse
+{
+    public string Error { get; set; } = string.Empty;
 }
 
 /// <summary>

@@ -38,8 +38,10 @@
         <Grid Grid.Row="1" BackgroundColor="{StaticResource Gray900}">
             
             <!-- Camera Preview (Android CameraX PreviewView will be added programmatically) -->
-            <Border x:Name="CameraPreviewContainer"
-                    BackgroundColor="{StaticResource Gray800}"/>
+            <Grid x:Name="CameraPreviewContainer"
+                  BackgroundColor="{StaticResource Gray800}"
+                  HorizontalOptions="Fill"
+                  VerticalOptions="Fill"/>
             
             <!-- Fallback UI (shown when camera not available) -->
             <VerticalStackLayout x:Name="CameraPlaceholder"

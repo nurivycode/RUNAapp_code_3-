@@ -41,9 +41,10 @@ public class OpenAIService : IOpenAIService
         
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Content = JsonContent.Create(requestBody, options: _jsonOptions);
-        
-        var response = await _httpClient.SendAsync(request);
-        
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var response = await _httpClient.SendAsync(request, cts.Token);
+
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -87,9 +88,10 @@ public class OpenAIService : IOpenAIService
         
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Content = JsonContent.Create(requestBody, options: _jsonOptions);
-        
-        var response = await _httpClient.SendAsync(request);
-        
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var response = await _httpClient.SendAsync(request, cts.Token);
+
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -111,9 +113,10 @@ public class OpenAIService : IOpenAIService
         
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
         request.Content = JsonContent.Create(requestBody, options: _jsonOptions);
-        
-        var response = await _httpClient.SendAsync(request);
-        
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var response = await _httpClient.SendAsync(request, cts.Token);
+
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
@@ -156,6 +159,26 @@ public class OpenAIService : IOpenAIService
             "cancel" => IntentAction.Cancel,
             _ => IntentAction.Unknown
         };
+    }
+
+    /// <summary>
+    /// Sends a lightweight warmup request to reduce backend cold-start latency.
+    /// Fire-and-forget — errors are silently ignored.
+    /// </summary>
+    public async Task WarmupAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Constants.BackendBaseUrl))
+            return;
+
+        try
+        {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await _httpClient.GetAsync($"{Constants.BackendBaseUrl}/warmup", cts.Token);
+        }
+        catch
+        {
+            // Best-effort warmup — silently ignore errors
+        }
     }
 
     private static void EnsureBackendConfigured()

@@ -14,13 +14,11 @@
 
          Routes:
          - //Welcome - Landing page for unauthenticated users
-         - //Login - Sign in page
-         - //Register - Sign up page
+         - //AccessCode - Access code sign in page
          - //Dashboard - Main app dashboard (authenticated)
          - //Navigation - Navigation/Maps page
          - //Vision - Computer vision/obstacle detection page
          - //Settings - User settings page
-         - //Setup - API configuration page
          ═══════════════════════════════════════════════════════════════════════ -->
 
     <!-- Authentication Routes (No Tab Bar) -->
@@ -31,14 +29,8 @@
         Shell.TabBarIsVisible="False" />
 
     <ShellContent
-        Route="Login"
-        ContentTemplate="{DataTemplate views:LoginPage}"
-        Shell.NavBarIsVisible="True"
-        Shell.TabBarIsVisible="False" />
-
-    <ShellContent
-        Route="Register"
-        ContentTemplate="{DataTemplate views:RegisterPage}"
+        Route="AccessCode"
+        ContentTemplate="{DataTemplate views:AccessCodePage}"
         Shell.NavBarIsVisible="True"
         Shell.TabBarIsVisible="False" />
 
@@ -65,12 +57,6 @@
         Route="Settings"
         ContentTemplate="{DataTemplate views:SettingsPage}"
         Shell.NavBarIsVisible="False"
-        Shell.TabBarIsVisible="False" />
-
-    <ShellContent
-        Route="Setup"
-        ContentTemplate="{DataTemplate views:SetupPage}"
-        Shell.NavBarIsVisible="True"
         Shell.TabBarIsVisible="False" />
 
 </Shell>

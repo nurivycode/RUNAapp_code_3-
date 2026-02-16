@@ -37,6 +37,14 @@ public interface IAuthService
     /// <param name="password">User's password.</param>
     /// <returns>The authenticated user or throws an exception.</returns>
     Task<User> SignInAsync(string email, string password);
+
+    /// <summary>
+    /// Signs in a user using an access code and device binding.
+    /// </summary>
+    /// <param name="accessCode">Access code provided by the company.</param>
+    /// <param name="deviceId">Stable device identifier.</param>
+    /// <returns>The authenticated user or throws an exception.</returns>
+    Task<User> SignInWithAccessCodeAsync(string accessCode, string deviceId);
     
     /// <summary>
     /// Signs out the current user.
